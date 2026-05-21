@@ -8,6 +8,7 @@ from tourney.classes.Teams import Teams as Teams
 from tourney.classes.Events import Events as Events
 from tourney.classes.Tourney import Tourney as Tourney
 
+# Flask
 app = Flask(__name__)
 
 @app.route("/")
