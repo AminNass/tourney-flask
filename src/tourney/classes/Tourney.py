@@ -1,6 +1,5 @@
-from tourney.classes import Common as Common
+from tourney.classes import Common as Common, Events as Events
 import copy
-import Events
 
 class Tourney:
 
@@ -10,13 +9,13 @@ class Tourney:
         self.id = identifier
 
         self.name = name
+
         self.events = {}
 
     @classmethod
     def createTourney(cls, name):
-
         for ob in cls.registry.values():
-        # Checking for every value (Which is a object) in the registry is the same as the name argument.
+        # Checking for every value (Which is an object) in the registry is the same as the name argument.
             if ob.name == name:
                 print("The tourney:", name, "already exists.")
                 return None
@@ -59,7 +58,7 @@ class Tourney:
         # Runs when id is none and name is something other than None.
         elif not name == None:
             for ob in cls.registry.values():
-            # Checking for every value (Which is a object) in the registry is the same as the name argument.
+            # Checking for every value (Which is an object) in the registry is the same as the name argument.
                 if ob.name == name:
                     # Returns when found the name.
                     return ob
@@ -125,19 +124,19 @@ class Tourney:
         # Runs when id is none and name is something other than None.
         elif not name == None:
             for ob in self.events.values():
-            # Checking for every value (Which is a object) in the registry is the same as the name argument.
+            # Checking for every value (Which is an object) in the registry is the same as the name argument.
                 if ob.name == name:
                     # Returns when found the name.
                     return ob
         else:
-            # Returns nothing when both arugments are None.
-            print("No arguements was entered")
+            # Returns nothing when both arguments are None.
+            print("No arguments was entered")
             return None
         
         # Returns None when no event is found in the registry with the ID or Username.
-        print("No event was found with the name:", name, "or the ID:", id, "in this tourmanent.")
+        print("No event was found with the name:", name, "or the ID:", id, "in this tournament.")
         return None
-        
+
     def checkEventDeletion(self):
 
         # Gets events registry
@@ -147,9 +146,9 @@ class Tourney:
         for eventObject in self.events.values():
             # gets id of object
             id = eventObject.id
-            # Gets the value using that id in the events registry.
+            # Gets the value using that id in the events' registry.
             result = eventsRegistry.get(id)
-            # if there isnt a id found it will return none.
+            # if there isn't an id found it will return none.
             if result == None:
                 print(f"[{self.name}]: Missing event found: {id}")
                 self.removeEvent(eventObject)

@@ -15,18 +15,25 @@ class Teams:
     #
 
     @classmethod
-    def createTeam(cls, name):
+    def createTeam(cls, name, type=None):
 
         for ob in cls.registry.values():
-        # Checking for every value (Which is a object) in the regisry is the same as the name arugement.
+        # Checking for every value (Which is an object) in the registry is the same as the name argument.
             if ob.name == name:
                 print("The Team name:", name, "already exists.")
                 return None
 
+        prefix = "TEAM"
+
+        if type == "I": prefix = "I.TEAM"
+
         # Generates a unqiue ID.
-        unqiueId = Common.uniqueIDGenerator(registry=cls.registry, prefix="TEAM")
-        # creates a new team as a object.
+        unqiueId = Common.uniqueIDGenerator(registry=cls.registry, prefix=prefix)
+        # creates a new team as an object.
         newTeam = cls(master=cls, identifier=unqiueId, name=name)
+        if type == "I":
+            del newTeam.members
+            newTeam.member = None
 
         # Adds new team to registry.
         cls.registry[unqiueId] = newTeam
@@ -120,7 +127,7 @@ class Teams:
 
         # Loop through every member inside of this team.
         for mId in self.members:
-            # Check if the the Ids in member registry.
+            # Check if the Ids in member registry.
             if mId in memberRegistry:
                 # When found Id, get the value using the mId.
                 memberObject = memberRegistry[mId]

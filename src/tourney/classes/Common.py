@@ -9,7 +9,7 @@ def uniqueIDGenerator(registry=None, prefix=None):
 
     if not f"{prefix}-{randomNum}" in registry: return f"{prefix}-{randomNum}"
 
-    uniqueIDGenerator(registry=None, prefix=None)
+    uniqueIDGenerator(registry=registry, prefix=prefix)
 
 def saveAllData():
     print("Saving all data...")

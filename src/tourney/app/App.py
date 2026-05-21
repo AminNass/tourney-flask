@@ -1,28 +1,25 @@
 from flask import Flask, render_template
 
 import webview
-import threading
 
-from tourney.classes.Members import Members as Members
-from tourney.classes.Teams import Teams as Teams
-from tourney.classes.Events import Events as Events
-from tourney.classes.Tourney import Tourney as Tourney
+from tourney.classes import Members as Members, Teams as Teams, Events as Events, Tourney as Tourney, Common as Common
 
 # Flask
-app = Flask(__name__)
+def createApp():
+    app = Flask(__name__)
 
-@app.route("/")
-def index():
-    return render_template("index.html")
+    @app.route("/")
+    @app.route("/home")
+    def home():
 
-def start_flask():
-    # Run Flask on a specific port
-    app.run(host='127.0.0.1', port=5000, debug=False, use_reloader=False)
+        memberList = list(Members.Members.getMemberRegistry())
+        return render_template(
+            "home.html",
+            members=memberList
+        )
 
-if __name__ == "__main__":
-    flask_thread = threading.Thread(target=start_flask)
-    flask_thread.daemon = True
-    flask_thread.start()
+    return app
 
-    webview.create_window("Tourney", "http://127.0.0.1:5000")
+def createWindow(name, app):
+    webview.create_window(name, app)
     webview.start()

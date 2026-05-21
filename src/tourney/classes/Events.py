@@ -11,6 +11,7 @@ class Events:
         self.name = name
 
         self.points = {}
+        self.rankPoints = {}
 
     @classmethod
     def createEvent(cls, name):
@@ -45,7 +46,7 @@ class Events:
             return False
     
     @classmethod
-    def getTeam(cls, id=None, name=None):
+    def getEvent(cls, id=None, name=None):
 
         # This gives 2 options for getting the object of the event.
 
@@ -128,3 +129,50 @@ class Events:
         if self.status == "Ready":
             print(self.name, "Event cannot have a length when ready.")
             return
+
+    def rankSettings(self, ranks, points):
+
+        # Set removes duplicates. The application with check already. This is a fail-safe.
+        setRanks = set(ranks)
+
+        for rank in setRanks:
+            self.rankPoints[rank] = points
+        return
+
+    def addTeam(self, team):
+
+        if team in self.points:
+            print("Team:", team, "is already in this event")
+            return
+
+        self.points[team] = 0
+        return
+
+    def removeTeam(self, team):
+        result = self.points.pop(team)
+        if result == None:
+            print("Team not found")
+        else:
+            print("Team found:", team)
+        return
+
+    def addRank(self, team, rank):
+
+        if team not in self.points:
+            print("Team:", team, "is not in this event")
+            return
+        points = self.rankPoints[rank] + self.points[team]
+        self.points[team] = points
+        print("Rank gained:", rank, "points gained:", points)
+        return
+
+    def removeRank(self, team, rank):
+
+        if team not in self.points:
+            print("Team:", team, "is not in this event")
+            return
+
+        points = self.points[team] - self.rankPoints[rank]
+        self.points[team] = points
+        print("Rank removed:", rank, "points removed:", points)
+        return

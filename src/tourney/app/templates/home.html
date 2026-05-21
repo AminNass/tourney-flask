@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Beat it</title>
+</head>
+
+<body>
+
+    <div class="container">
+        <h1>Welcome to Tourney Manager</h1>
+        <p>Manage your events, teams, and members directly from this dashboard.</p>
+
+        <hr>
+
+        <h2>Current Tourneys</h2>
+
+        {% if members %}
+            <ul>
+
+                {% for member in members %}
+                    <li><strong>{{ member }}</strong></li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No members registered yet.</p>
+        {% endif %}
+
+        <hr>
+    </div>
+</body>
+
+</html>
