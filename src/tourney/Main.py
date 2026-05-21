@@ -4,7 +4,7 @@ from tourney.classes import Teams as Teams, Members as Members
 import os
 from pathlib import Path
 
-
+# Main Class
 class Main:
 
     rootDirectory = Path(os.path.dirname(os.path.abspath(__file__)))
