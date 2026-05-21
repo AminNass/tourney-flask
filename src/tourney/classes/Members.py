@@ -1,5 +1,5 @@
 from tourney.classes import Common as Common
-from tourney import Main
+from tourney import Main as Main
 import json
 from pathlib import Path
 
