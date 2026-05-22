@@ -1,4 +1,5 @@
 from tourney.classes import Common as Common
+from tourney.classes.Common import log as log
 from tourney import Main as Main
 import json
 from pathlib import Path
@@ -39,8 +40,8 @@ class Members:
             fileName = f"({user.id}) {user.username}.json"
             with open(cls.saveDirectory / fileName, "w") as f:
                 json.dump(memberData, f, indent=4)
-        
-            print(f"{fileName} SAVED")
+
+            log(f"{fileName} SAVED", "SUCCESS")
 
     @classmethod
     def loadData(cls):
@@ -49,7 +50,7 @@ class Members:
 
         # Check if the directory exists to avoid errors.
         if not saveDirectory.exists():
-            print("No save data directory found.")
+            log("No save data directory found.", "ERROR")
             return
 
         # Loop through every .json file in the folder
@@ -69,10 +70,10 @@ class Members:
                 # 5. Add it back into the registry dictionary
                 cls.registry[loadedMember.id] = loadedMember
             
-                print(f"Loaded member: {loadedMember.username}")
+                log(f"Loaded member: {loadedMember.username}", "SUCCESS")
             
             except Exception as e:
-                print(f"Failed to load {filePath.name}: {e}")
+                log(f"Failed to load {filePath.name}: {e}", "ERROR")
     
     #
     # Class Methods
@@ -85,7 +86,7 @@ class Members:
         for ob in cls.registry.values():
         # Checking for every value (Which is an object) in the registry is the same as the username arugement.
             if ob.username == username:
-                print("The Username:", username, "already exists.")
+                log(f"The Username: {username} already exists.", "ERROR")
                 return None
 
         # Generates a unqiue ID.
@@ -96,7 +97,7 @@ class Members:
 
         # Adds the member to the registry.
         cls.registry[unqiueId] = newMember
-        print(f"Member '{username}' created.")
+        log(f"Member '{username}' created.", "SUCCESS")
         # Returns the new member to né used in the main class.
         return newMember
 
@@ -108,24 +109,24 @@ class Members:
 
         # Checks if it was sucessfully popped out. If False then username is not in the registry
         if removedUser:
-            print("Member:", ob.username, "removed")
+            log(f"Member: {ob.username} removed", "SUCCESS")
             return True
         else:
-            print("Member:", ob.username, "not found")
+            log(f"Member: {ob.username} not found", "ERROR")
             return False
 
     # class method to change member information
     @classmethod
-    def changeInformation(cls, ob, newUsername=None, newFirstName=None, newlastName=None):
+    def changeInformation(cls, ob, newUsername=None, newFirstName=None, newLastname=None):
         # Setting arguements to variables
         username = newUsername
         firstname = newFirstName
-        lastname = newlastName
+        lastname = newLastname
 
         # Keeps data that hasnt been changed.
         if newUsername == None: username = ob.username
         if newFirstName == None: firstname = ob.firstname
-        if newlastName == None: lastname = ob.lastname
+        if newLastname == None: lastname = ob.lastname
 
         # Create a new object of itself:
         # Makes sure that the identifier stays the same by taking it from the original object.
@@ -156,14 +157,15 @@ class Members:
             # Checking for every value (Which is an object) in the regisry is the same as the username arugement.
                 if ob.username == username:
                     # Returns when found the name.
+                    log(f"User found: {username}", "SUCCESS")
                     return ob
         else:
             # Returns nothing when both arugments are None.
-            print("No arguements was entered")
+            log(f"No arguements was entered", "ERROR")
             return None
             
         # Returns None when no Member is found in the registry with the ID or Username.
-        print("No member was found using the Username:", username, "or the ID:", id)
+        log(f"No member was found using the Username:, {username} or the ID:, {id}", "ERROR")
         return None
 
     @classmethod

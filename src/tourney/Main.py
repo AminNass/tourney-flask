@@ -1,5 +1,8 @@
+import datetime
+
 from tourney.classes import Teams as Teams, Members as Members, Events as Events, Tourney as Tourney
 from tourney.app import App as AppModule
+from tourney.classes.Common import log as log
 import os
 from pathlib import Path
 
@@ -9,7 +12,7 @@ class Main:
     rootDirectory = Path(os.path.dirname(os.path.abspath(__file__)))
 
     def __init__(self):
-        print("Running...")
+        log(f"Program started at {datetime.datetime.now()}", "SUCCESS")
 
     def run(self):
         app = AppModule.createApp()
@@ -41,9 +44,9 @@ class Main:
             lastname="Clark"
         )
 
-        print(f"Dictionary check: {list(Members.Members.getMemberRegistry())}")
+        log(f"Dictionary check: {list(Members.Members.getMemberRegistry())}")
 
-        print(Members.Members.getMember(username="JoeC").lastname)
+        log(Members.Members.getMember(username="JoeC").lastname)
 
         Teams.Teams.createTeam("Team Falcons")
 

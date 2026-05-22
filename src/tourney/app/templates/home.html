@@ -1,19 +1,15 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Beat it</title>
-</head>
+{% extends 'base.html' %}
 
-<body>
+{% block title %}Home{% endblock %}
 
+{% block content %}
     <div class="container">
         <h1>Welcome to Tourney Manager</h1>
         <p>Manage your events, teams, and members directly from this dashboard.</p>
 
         <hr>
 
-        <h2>Current Tourneys</h2>
+        <h2>Current Members</h2>
 
         {% if members %}
             <ul>
@@ -28,6 +24,4 @@
 
         <hr>
     </div>
-</body>
-
-</html>
+{% endblock %}

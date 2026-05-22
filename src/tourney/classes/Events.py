@@ -1,4 +1,5 @@
 from tourney.classes import Common as Common
+from tourney.classes.Common import log as log
 import datetime
 
 class Events:
@@ -12,6 +13,11 @@ class Events:
 
         self.points = {}
         self.rankPoints = {}
+        self.addMultipleRanks = False
+
+        self.status = None
+        self.startTime = None
+        self.endTime = None
 
     @classmethod
     def createEvent(cls, name):
@@ -19,7 +25,7 @@ class Events:
         for ob in cls.registry.values():
         # Checking for every value (Which is a object) in the regisry is the same as the name arugement.
             if ob.name == name:
-                print("The name:", name, "already exists.")
+                log(f"The name: {name} already exists.", "ERROR")
                 return None
             
         unqiueId = Common.uniqueIDGenerator(registry=cls.registry, prefix="EVENT")
@@ -28,21 +34,21 @@ class Events:
         newEvent.status = "Ready"
 
         cls.registry[unqiueId] = newEvent
-        print(f"Team '{name}' created.")
+        log(f"Team '{name}' created.")
 
         return newEvent
     
     @classmethod
     def delEvent(cls, ob):
-        # It pops out the ID from the registry. The pop() function returns true when sucessfull.
+        # It pops out the ID from the registry. The pop() function returns true when successful.
         deletedEvents = cls.registry.pop(ob.id, None)
 
         # Checks if it was sucessfully popped out. If False then team is not in the registry
         if deletedEvents:
-            print("Team:", ob.name, "removed")
+            log(f"Team: {ob.name} removed", "SUCCESS")
             return True
         else:
-            print("Team:", ob.name, "not found")
+            log(f"Team: {ob.name} not found", "ERROR")
             return False
     
     @classmethod
@@ -67,11 +73,11 @@ class Events:
                     return ob
         else:
             # Returns nothing when both arugments are None.
-            print("No arguements was entered")
+            log("No arguements was entered", "ERROR")
             return None
             
         # Returns None when no event is found in the registry with the ID or Username.
-        print("No event was found with the name:", name, "or the ID:", id)
+        log(f"No event was found with the name: {name} or the ID: {id}", "ERROR")
         return None
     
     @classmethod
@@ -84,55 +90,52 @@ class Events:
     #
 
     def startEvent(self):
-
         if self.status == "Ready":
-            startDateTime = datetime
-            print(self.name,"Event has started:", startDateTime)
+            startDateTime = datetime.datetime.now()
+            log(f"{self.name} Event has started: {startDateTime}", "SUCCESS")
             self.startTime = startDateTime
             self.status = "Started"
+            return
 
-            print(self.name, "Event is not ready yet")
-            return    
-
-        print()
+        log(f"{self.name} Event is not ready yet", "ERROR")
         return
     
     def endEvent(self):
         if self.status == "Started":
-            endDateTime = datetime
-            print(self.name,"Event has ended:", endDateTime)
+            endDateTime = datetime.datetime.now()
+            log(f"{self.name} Event has ended: {endDateTime}", "SUCCESS")
             self.endTime = endDateTime
             self.status = "Ended"
             return
         
-        print(self.name, "Event has not started.")
+        log(f"{self.name} Event has not started.", "ERROR")
         return
     
     def readyEvent(self):
         if self.status == "Ended":
             self.points = {}
             self.status = "Ready"
-            print(self.name, "Event is ready.")
+            log(f"{self.name} Event is ready.", "SUCCESS")
             return
         elif self.status == "Started":
-            print(self.name, "Event cannot be ready when it has already started.")
+            log(f"{self.name} Event cannot be ready when it has already started.", "ERROR")
             return
         
-        print(self.name, "Event is already ready.")
+        log(f"{self.name} Event is already ready.", "ERROR")
         return
     
     def eventLength(self):
-        if self.status == "Started": return datetime - self.startTime
+        if self.status == "Started": return datetime.datetime.now() - self.startTime
             
         if self.status == "Ended": return self.startTime - self.endTime
 
         if self.status == "Ready":
-            print(self.name, "Event cannot have a length when ready.")
+            log(f"{self.name} Event cannot have a length when ready.", "ERROR")
             return
 
     def rankSettings(self, ranks, points):
 
-        # Set removes duplicates. The application with check already. This is a fail-safe.
+        # Set removes duplicates. The application will check already. This is a fail-safe.
         setRanks = set(ranks)
 
         for rank in setRanks:
@@ -142,7 +145,7 @@ class Events:
     def addTeam(self, team):
 
         if team in self.points:
-            print("Team:", team, "is already in this event")
+            log(f"Team: {team} is already in this event", "ERROR")
             return
 
         self.points[team] = 0
@@ -151,28 +154,35 @@ class Events:
     def removeTeam(self, team):
         result = self.points.pop(team)
         if result == None:
-            print("Team not found")
+            log(f"{team} Team not found", "ERROR")
         else:
-            print("Team found:", team)
+            log(f"Team found: {team}", "SUCCESS")
         return
 
     def addRank(self, team, rank):
 
         if team not in self.points:
-            print("Team:", team, "is not in this event")
+            log(f"Team: {team} is not in this event", "ERROR")
             return
+        elif not self.addMultipleRanks:
+            if self.rankPoints[team] > 0:
+                log(f"Team: {team} already gained a rank in this event", "ERROR")
+
         points = self.rankPoints[rank] + self.points[team]
         self.points[team] = points
-        print("Rank gained:", rank, "points gained:", points)
+        log(f"Rank gained: {rank} points gained: {points}", "SUCCESS")
         return
 
     def removeRank(self, team, rank):
 
         if team not in self.points:
-            print("Team:", team, "is not in this event")
+            log(f"Team: {team} is not in this event", "ERROR")
             return
 
         points = self.points[team] - self.rankPoints[rank]
         self.points[team] = points
-        print("Rank removed:", rank, "points removed:", points)
+        log(f"Rank removed: {rank} points removed: {points}")
         return
+
+    #debug
+

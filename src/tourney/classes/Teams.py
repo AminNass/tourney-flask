@@ -1,4 +1,5 @@
 from tourney.classes import Members as Members, Common as Common
+from tourney.classes.Common import log as log
 
 class Teams:
 
@@ -20,7 +21,7 @@ class Teams:
         for ob in cls.registry.values():
         # Checking for every value (Which is an object) in the registry is the same as the name argument.
             if ob.name == name:
-                print("The Team name:", name, "already exists.")
+                log(f"The Team name: {name} already exists.", "ERROR")
                 return None
 
         prefix = "TEAM"
@@ -37,8 +38,8 @@ class Teams:
 
         # Adds new team to registry.
         cls.registry[unqiueId] = newTeam
-        print(f"Team '{name}' created.")
-        # Returns the new team to ne used in the main class.
+        log(f"Team '{name}' created.", "SUCCESS")
+        # Returns the new team to be used in the main class.
         return newTeam
 
     @classmethod
@@ -48,10 +49,10 @@ class Teams:
 
         # Checks if it was sucessfully popped out. If False then team is not in the registry
         if removedTeam:
-            print("Team:", ob.name, "removed")
+            log(f"Team: {ob.name} removed", "SUCCESS")
             return True
         else:
-            print("Team:", ob.name, "not found")
+            log(f"Team: {ob.name} not found", "ERROR")
             return False
 
 
@@ -77,11 +78,11 @@ class Teams:
                     return ob
         else:
             # Returns nothing when both arugments are None.
-            print("No arguements was entered")
+            log(f"No arguements was entered", "ERROR")
             return None
             
         # Returns None when no team is found in the registry with the ID or Username.
-        print("No team was found with the name:", name, "or the ID:", id)
+        log(f"No team was found with the name: {name} or the ID: {id}", "ERROR")
         return None
 
 
@@ -101,12 +102,12 @@ class Teams:
             # Loops through every Member ID
             for j in args:
                 if i == j.id:
-                    print(j, "is already a member of", i)
+                    log(f"{j}, is already a member of {i}", "ERROR")
                     return None
         
         for i in args:
             self.members.append(i.id)
-        print("Member(s) has been added")
+        log(f"Member(s) has been added.", "SUCCESS")
         return None
     
     def removeMember(self, *args):
@@ -116,8 +117,8 @@ class Teams:
                 if i == self.members[j]:
                     self.members.pop(j)
                     continue
-                print(i.username, "cannot be found in members: Skipping")
-        print("Member(s) has been removed")
+                log(f"{i.username} cannot be found in members: Skipping", "ERROR")
+        log(f"Member(s) has been removed.", "SUCCESS")
         return
 
     def getMembers(self):
@@ -133,7 +134,7 @@ class Teams:
                 memberObject = memberRegistry[mId]
                 foundMembers.append(memberObject)
             else:
-                print("Id not found in Member registry:", mId, "not found.")
+                log(f"Id not found in Member registry: {mId} not found.")
 
         # Returns a list of Member objects.
         return foundMembers

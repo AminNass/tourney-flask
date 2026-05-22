@@ -1,0 +1,43 @@
+
+The first thing I did is to create the main classes.
+In this tourney program there will be Members, Teams, Events and Tourneys.
+So the first thing I did is create a module (Python file) and declared classes in them.
+
+Files Created:
+Members.py
+Teams.py
+Events.py
+Tourney.py
+
+The second thing is to create a class inside each module.
+For example:
+
+class Members:
+class Teams:
+class Events:
+class Tourney:
+
+All the data will be stored as objects. You must create a class and have a 'def __init__' function inside the class.
+Inside the __init__ function you will declare a few variables.
+
+Example for Members Class:
+
+-
+class Members:
+    def __init__(self, master=None, username=None, firstname=None, lastname=None):
+        # Inside of these brackets are arguments. When creating an object you must pass through the right data.
+
+        self.username = username
+        self.firstname = firstname
+        self.lastname = lastname
+        # These are the variables stored inside the object.
+        # These objects will always be unique to this instance of this object.
+-
+
+To clarify you can create an object of this class.
+You must pass through the arguments in order for data to be saved to that object.
+This will create a new instance of that object. Creating a new object with its own data will have no effect to any other instances.
+
+
+
+

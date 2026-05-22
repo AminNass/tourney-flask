@@ -1,4 +1,5 @@
 from tourney.classes import Common as Common, Events as Events
+from tourney.classes.Common import log as log
 import copy
 
 class Tourney:
@@ -17,7 +18,7 @@ class Tourney:
         for ob in cls.registry.values():
         # Checking for every value (Which is an object) in the registry is the same as the name argument.
             if ob.name == name:
-                print("The tourney:", name, "already exists.")
+                log(f"The tourney: {name} already exists.", "ERROR")
                 return None
             
         unqiueId = Common.uniqueIDGenerator(registry=cls.registry, prefix="TRN")
@@ -25,7 +26,7 @@ class Tourney:
         newTourney = cls(master=cls, identifier=unqiueId, name=name)
 
         cls.registry[unqiueId] = newTourney
-        print(f"Team '{name}' created.")
+        log(f"Team '{name}' created.", "SUCCESS")
 
         return newTourney
     
@@ -36,10 +37,10 @@ class Tourney:
 
         # Checks if it was successfully popped out. If False then team is not in the registry
         if removedTourney:
-            print("Team:", ob.name, "removed")
+            log(f"Team: {ob.name} removed", "SUCCESS")
             return True
         else:
-            print("Team:", ob.name, "not found")
+            log(f"Team: {ob.name} not found", "ERROR")
             return False
     
     @classmethod
@@ -64,11 +65,11 @@ class Tourney:
                     return ob
         else:
             # Returns nothing when both arguments are None.
-            print("No arguments was entered")
+            log(f"No arguments was entered", "ERROR")
             return None
             
         # Returns None when no Member is found in the registry with the ID or Username.
-        print("No tourney was found with the name:", name, "or the ID:", id)
+        log(f"No tourney was found with the name: {name} or the ID: {id}", "ERROR")
         return None
 
     #
@@ -80,7 +81,7 @@ class Tourney:
         # Checks if this event name already exists in this tournament.
         for event in self.events.values():
             if event.name == name:
-                print("The Event:", name, "already exists in this tournament.")
+                log(f"The Event: {name} already exists in this tournament.", "ERROR")
                 return None
 
         # Creates a deep copy of this instance.
@@ -103,10 +104,10 @@ class Tourney:
 
         # Checks if it was successfully popped out. If False then team is not in the registry
         if removedEvent:
-            print("Team:", ob.name, "removed")
+            log(f"Team: {ob.name} removed", "SUCCESS")
             return True
         else:
-            print("Team:", ob.name, "not found")
+            log(f"Team: {ob.name} not found", "ERROR")
             return False
     
     def getEvent(self, id=None, name=None):
@@ -130,11 +131,11 @@ class Tourney:
                     return ob
         else:
             # Returns nothing when both arguments are None.
-            print("No arguments was entered")
+            log(f"No arguments was entered", "ERROR")
             return None
         
         # Returns None when no event is found in the registry with the ID or Username.
-        print("No event was found with the name:", name, "or the ID:", id, "in this tournament.")
+        log(f"No event was found with the name: {name} or the ID: {id} in this tournament.", "ERROR")
         return None
 
     def checkEventDeletion(self):
@@ -150,11 +151,11 @@ class Tourney:
             result = eventsRegistry.get(id)
             # if there isn't an id found it will return none.
             if result == None:
-                print(f"[{self.name}]: Missing event found: {id}")
+                log(f"[{self.name}]: Missing event found: {id}")
                 self.removeEvent(eventObject)
                 missingEvents.append(id)
             else:
-                print(f"[{self.name}]: Found ID: {id} in events registry.")
+                log(f"[{self.name}]: Found ID: {id} is in events registry.")
         return
 
         

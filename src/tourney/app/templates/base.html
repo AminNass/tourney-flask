@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">>
+    <title>{% block title %}{% endblock %}</title>
+</head>
+<body style="display: flex; margin: 0; height: 100vh;">
+
+    <aside style="width: 20%; background-color: #eee; padding: 10px;">
+        <a href="/home">Home</a>
+        <br><br>
+        <a href="/members">Members</a>
+        <br><br>
+        <a href="/teams">Teams</a>
+        <br><br>
+        <a href="/events">Events</a>
+        <br><br>
+        <a href="/tourneys">Tourneys</a>
+    </aside>
+
+    <section style="width: 80%; padding: 20px;">
+        {% block content %}
+        {% endblock %}
+    </section>
+
+</body>
+</html>
