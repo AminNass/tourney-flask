@@ -24,7 +24,7 @@ Example for Members Class:
 
 -
 class Members:
-    def __init__(self, master=None, username=None, firstname=None, lastname=None):
+    def __init__(self, username=None, firstname=None, lastname=None):
         # Inside of these brackets are arguments. When creating an object you must pass through the right data.
 
         self.username = username
@@ -38,6 +38,249 @@ To clarify you can create an object of this class.
 You must pass through the arguments in order for data to be saved to that object.
 This will create a new instance of that object. Creating a new object with its own data will have no effect to any other instances.
 
+After creating all the classes, these will be what is stored in each:
+
+Members Class:
+self.username = username
+self.firstname = firstname
+self.lastname = lastname
+
+Teams Class:
+
+self.name = name
+self.members = []
+
+Events Class:
+
+self.name = name
+self.points = {}
+
+Tourney Class:
+
+self.name = name
+self.events = []
+
+A few things to point out is that I used a list to store the members for a team.
+This is the best way to store multiple Members in 1 variable.
+Another thing is the points in the Event Class. Using '{}' creates a dictionary,
+which allows for a unique key (A team) to be assigned to a value (the amount of points for that team).
+A dictionary will look like this: Key:"TEAM-123", Value:23.
+The final thing is the events inside the tourney Class. I have used an array to store all the different events.
+
+Now the next thing is to make the main class. It's done like this:
+
+class Main:
+    def __init__(self):
+        print("Program running...")
+
+    def main(self):
+        # Code goes here
+
+if __name__ == "__main__":
+    app = Main()
+    app.main()
+
+First I created a class, next I created a __init__ function.
+I did not explain this before but this is what runs when an object of this class is created.
+This is how we are able to set variables for this object, since the variables are stored in self,
+which is referring to the currently created object.
+
+The: if __name__ == "__main__",
+this is the code that runs when this file is executed directly.
+The __name__ variable is a built-in variable. If you print this when executing the current file then:
+
+Result: __main__,
+
+If another module (Python file) executes this program using Python's import feature,
+and that files name is called "other_module" then the result will be:
+
+Result: other_module
+
+This makes sure that when something runs this file it will never run unless it was run directly.
+None of the other classes has this since it will never be run directly.
+
+Let me talk about the import feature, as it allows you to import code from other files.
+Always when you import something, and you run it will always run the code in that file.
+
+if __name__ == "__main__"
+
+This line is at the lowest scope of the file, and it isn't under any class or function.
+Classes and functions only run when called so import them allows for them to be callable.
+If there is any other code it will be run. This if statement will stop any other module from running main.
+
+Now that my classes are ready inside of the main(self) function within my Main class I can put my code.
+First I would have to import all the classes I have made to get access to them.
+
+import Members, Teams, Events, Tourney
+
+then inside my main(self):
+
+def main(self):
+    newMember = Members.Members(username="MikeA", firstname="Mike", lastname="Afton")
+
+    newTeam = Teams.Teams(name="Team Falcons")
+
+    newEvent = Events.Events(name="Major")
+
+    Tourney = Tourney.Tourney(name="Tournament")
+
+I have created object with the data. Notice that not all the variables are being declared.
+For teams, it makes sense for the team to be created first then the members to be added.
+For events, the points will not be added when the object is created.
+For tourney, events won't be assigned to the tourney as soon as its created.
+
+When creating an object you can change its variables:
+
+newTeam.name = "Space Station Gaming"
+newEvent.points[newTeam.name] = 50
+
+I was able to change the team name and also add a value to the points dictionary.
+To add a value to a dictionary you must add square brackets on the variable,
+to put the key and equal it to the value you want. Eg variable[key] = 10.
+
+However, I don't want to change the values directly. I would want to create helper functions to this class to make sure that data is properly created.
+
+For example in my members class I would add:
+
+@classmethod
+def createMember(cls, username, firstname, lastname):
+
+    newMember = cls.Members(username=username,firstname=firstname,lastname=lastname)
+
+    return newMember
+
+To explain this slowly when something calls this function:
+
+user = Members.Members.createMember(username="user",firstname="firstname",lastname="lastname")
+
+It will create the object for you and return the object. The object will be stored inside the user var.
+Since this function returns the newly made Member object. This basically allows us to do the same thing before except,
+I will be able to add logic to prevent some agreements from allowing the creation of this member to be successful.
+Validation is especially important as it prevents users from entering things that your program did expect possibly causing a crash.
+
+One thing I noticed is that if the user variable was ever lost, I would never be able to get that object again.
+A solution to this problem is presistent data however I think that is too soon the implement but something that will,
+help make presisent data possible is adding a registry system. Basically a variable where all the data is stored.
+
+How I think It best should be done is each class have its own registry. I think it should be stored as a dictionary.
+
+For example to create a member, I would actually add on to my createMember function.
+
+class Members:
+
+    registry = {}
+
+    #...
+    # __init__ function goes here
+    #...
+
+    @classmethod
+    def createMember(self, username, firstname, lastname):
+
+        # Keep the same creating object process.
+
+        newMember = cls.Members(username=username,firstname=firstname,lastname=lastname)
+
+        # Add the new member to the registry.
+        # Pass the username as the key, as it would have to be unique for every member.
+        # Set the value to the newly created object.
+        cls.registry[username] = newMember
+        return newMember
+
+Now all object can be obtained through the registry by doing:
+
+membersRegistry = Members.Members.registry
+
+Now that you have the object itself you can get the object from the username by doing:
+
+member = membersRegistry[MikeA]
+
+This gets the value of with the key 'MikeA', the value is the object.
+There allows for any class to get all the members created.
+
+Now what this does is provided a single variable for the future to,
+save data and load in data form files to get persistent data.
+So far we have accomplished a way to store data and regain access to that data,
+however if you close the program that data will be lost.
+
+Now I would want to create more helper functions. In this devlog I won't be explaining every helper function,
+but in my code I would have commented what each function does. I will be explaining my understanding,
+my decision-making and program design. I am the one who thinks far ahead when creating programs.
+
+For each but using the members as a example I will be making:
+
+@classmethod
+getMember(self, username):
+# This will get the object from the registry using the username as the key.
+
+@classmethod
+changeInformation(self, object, username, firstname, lastname)
+# This will change the information of an object.
+
+@classmethod
+removeMember(self, object)
+# This will remove the member using its username from the registry.
 
 
+# NOTE: changeInformation function
+When I first implemented this function I made it so it created a new object and then updated the object in the registry.
+There is a way easier way to do this and is by directly changing the details on the object that was passed through,
+rather than creating a new object using the updated details. There isn't a need to update the registry.
 
+# NOTE: change in registry system
+At some point I realized that the username as a key wasn't a good idea since if someone wants to change there information,
+the key would have to be changed in order to keep consistency. However, in my design I was going to use the keys to connect,
+between classes. For example the members list in the teams class will store the keys of the members rather than the objects.
+This makes it easier to save data as well as I wouldn't want to store objects in files since I would want it to be readable.
+
+To overcome this I have created an ID system where it generates a random number from 0 to 1000 and use that for,
+the key. Now when information is changed it doesn't have to change the key. This is the id generator:
+
+def uniqueIDGenerator(registry=None, prefix=None):
+
+    randomNum = random.randint(0, 1000)
+
+    if not f"{prefix}-{randomNum}" in registry: return f"{prefix}-{randomNum}"
+
+    uniqueIDGenerator(registry=registry, prefix=prefix)
+
+The arguments are registry and prefix. The registry argument is where you pass through the registry.
+This is so this function can check if the key already exists after it generates. The prefix is something I,
+want to add to the key. For example for the members I will call this function like this:
+
+uniqueIDGenerator(registry=Members.Members.registry, prefix="USER")
+
+To clarify I have decided to create a new module called Common as for every class it will just be the same function,
+copied and pasted, and it would make sense to create one function that supports all classes.
+
+The if statement checks is the new ID generated is in the registry. If it's not then it will return the new id as we,
+want it to be unique. If it is then it will call itself again to generate a new id. This is called recursion which allows
+functions that repeat code to call itself rather than making a loop.
+
+My current ID system does have some problems. For example if there are a lot of members then there is a high change that,
+when creating a new member it will take a bit longer to find an available ID since it would have to loop multiple times.
+It may take a too long to find an available ID which is problematic. If there are no ids left it will infinitely loop,
+over and over again. What I am thinking of doing for the future is to add a more complex ID generating system involving,
+letters and numbers increasing the variety and reducing chances of long loops. Considering the scope of this project,
+a college is expected to have around 1000 people if not less. I would write about this update later in this devlog.
+
+Also, one thing I have forgotten to talk about is class methods and other types of methods. The first type is the
+object method I like to call it. These are functions that get info or make changes on the object. These are the
+functions that require you to use the self argument (or self.function). Here is an example using a function I made.
+
+def getMemberInfo(self):
+    # Returns the username, firstname and lastname.
+    return [self.id, self.username, self.firstname, self.lastname]
+
+this function returns the member info with a list. If I call this function directly from an object like this:
+
+object.getMemberInfo(self)
+
+This will return all the info about the Member from that object. You can also call the object by itself from the class:
+
+Members.Members.getMemberInfo(object)
+
+By passing through the same object rather than calling from the object it will give the same result.
+
+a class method is a function that runs at the class level. It doesn't make any changes to any objects unless
+you have passed through an argument.
