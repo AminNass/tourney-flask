@@ -1,7 +1,7 @@
 import datetime
 
 from tourney.classes import Teams as Teams, Members as Members, Events as Events, Tourney as Tourney
-from tourney.app import App as AppModule
+from tourney.app.App import App as AppModule
 from tourney.classes.Common import log as log
 import os
 from pathlib import Path
@@ -12,17 +12,13 @@ class Main:
     rootDirectory = Path(os.path.dirname(os.path.abspath(__file__)))
 
     def __init__(self):
-        log(f"Program started at {datetime.datetime.now()}", "SUCCESS")
+        self.appModule = AppModule("Tourney", "home")
 
     def run(self):
-        app = AppModule.createApp()
-        Main.onInitialize(self, app)
+        log(f"Starting app: {datetime.datetime.now()}", "SUCCESS")
+        self.onInitialize()
 
-        AppModule.createWindow("Tourney", app)
-
-
-
-    def onInitialize(self, app):
+    def onInitialize(self):
 
         # Load logic here, just pre creating for testing.
 
@@ -55,6 +51,12 @@ class Main:
         RLCS = Tourney.Tourney.createTourney("RLCS")
 
         RLCS.addEvent("RLCS Major", Events.Events.createEvent("Major"))
+
+        log(Members.Members.formatData())
+
+        self.appModule.startWindow()
+
+
 
 
 if __name__ == "__main__":

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Loading...</title>
+</head>
+<body>
+    <div style="font-size: 25px">
+        Loading
+    </div>
+
+    <script>
+        // Troubleshooting here but this seemed to work.
+        // For some reason it takes a long time to change the title of a pywebview window when changing menus.
+        // It's something to do with changing the title and it holding it up delaying the render template process.
+
+        // This listener runs whatever when the page is fully loaded.
+        /*
+        In this case it will go to the home page,
+        if you have any reason it takes longer than expected the user will be shown,
+        on screen that the program is loading.
+        */
+        window.addEventListener('DOMContentLoaded', (event) => {
+            window.location.href="/{{ loadhtml }}";
+
+        });
+    </script>
+</body>
+</html>

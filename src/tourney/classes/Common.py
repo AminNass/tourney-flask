@@ -34,3 +34,4 @@ def log(message, type="INFO"):
         callerClass = "Global"
 
     print(f"{datetime.datetime.now()} - {type}: [{callerClass}] ({functionName}): {message}")
+    return type

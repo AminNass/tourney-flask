@@ -160,7 +160,7 @@ class Members:
                     log(f"User found: {username}", "SUCCESS")
                     return ob
         else:
-            # Returns nothing when both arugments are None.
+            # Returns nothing when both arguments are None.
             log(f"No arguements was entered", "ERROR")
             return None
             
@@ -173,6 +173,27 @@ class Members:
         # Returns the entire registry
         return cls.registry
 
+    # App functions
+
+    @classmethod
+    def formatData(cls):
+        data = [[],[],[],[]]
+
+        IDsList = list(cls.registry.keys())
+
+        # Append to data list
+
+        for ID in IDsList:
+            memberData = cls.getMember(id=ID)
+
+            data[0].append(memberData.id)
+            data[1].append(memberData.username)
+            data[2].append(memberData.firstname)
+            data[3].append(memberData.lastname)
+
+        rowData = list(zip(*data))
+        log(f"Successfully formatted data:\n {rowData}", "SUCCESS")
+        return rowData
     #
     # Object Functions
     #
