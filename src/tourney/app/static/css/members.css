@@ -1,0 +1,7 @@
+#editMemberForm {
+    display: none;
+}
+
+#editMemberForm.visible {
+    display: block;
+}

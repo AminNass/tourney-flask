@@ -1,6 +1,7 @@
 import threading
+import time
 
-from flask import Flask, render_template
+from flask import Flask, render_template, jsonify, request
 
 import webview
 from tourney.classes.Common import log as log
@@ -14,18 +15,21 @@ class App:
         self.loadhtml = loadhtml
         self.app = Flask(__name__)
         self.appMenus()
+        self.appAPI()
         self.window = webview.create_window(self.name, self.app, width=800, height=600, resizable=False)
 
         log(f"Created app: {name}, load page set to {loadhtml}.html", "SUCCESS")
 
     def appMenus(self):
 
+        # Menus
+
         @self.app.route("/")
         def launch():
             log(f"Getting ready to load page: loading.html")
             return render_template(
                 "loading.html",
-                loadhtml="home"
+                loadhtml=self.loadhtml
             )
 
         @self.app.route("/home")
@@ -41,7 +45,7 @@ class App:
 
         @self.app.route("/members")
         def members():
-            log(f"Getting ready to load page: home.html")
+            log(f"Getting ready to load page: members.html")
             self.changeTitle("Members")
 
             #memberData = Members.Members.formatData()
@@ -56,15 +60,61 @@ class App:
             log(f"Getting ready to load page: about.html")
             self.changeTitle("About")
 
+            Members.Members.saveData()
+
             return render_template(
                 "about.html"
             )
 
         log(f"Loaded all menus", "SUCCESS")
 
+    def appAPI(self):
+
+        @self.app.route(f"/api/createMember", methods=["POST"])
+        def createMember():
+            log("Received request to create a new member")
+
+            data = request.get_json()
+            username = data.get("username")
+            firstname = data.get("firstname")
+            lastname = data.get("lastname")
+
+            if not username or not firstname or not lastname:
+                log("Failed to create member: Missing Fields", "ERROR")
+                return jsonify({"status": "error", "message": "All fields are required"})
+
+            newMember = Members.Members.createMember(username, firstname, lastname)
+
+            if isinstance(newMember, Members.Members):
+                return jsonify({"status": "success", "message": f"Member with username: {newMember.username} has been created."})
+            else:
+                return jsonify({"status": "error", "message": f"{newMember}"})
+
+        @self.app.route("/api/editMember", methods=["POST"])
+        def editMember():
+            log("Received request to edit a member")
+
+            data = request.get_json()
+
+            MemberObject = Members.Members.getMember(id=data.get("memberID"))
+
+            newUsername = data.get("username")
+            newFirstname = data.get("firstname")
+            newLastname = data.get("lastname")
+
+            editedMember = Members.Members.changeInformation(MemberObject, newUsername, newFirstname, newLastname)
+
+            if isinstance(editedMember, Members.Members):
+                return jsonify({"status": "success", "message": f"Member with username: {editedMember.username} has been edited."})
+            else:
+                return jsonify({"status": "error", "message": f"{editedMember}"})
+
+        log(f"Loaded API", "SUCCESS")
+
     def startWindow(self):
+        log(f"Window started successfully", "SUCCESS")
         webview.start()
-        log(f"Window started.", "SUCCESS")
+        log(f"Window closed successfully", "SUCCESS")
 
     def changeTitle(self, title):
 

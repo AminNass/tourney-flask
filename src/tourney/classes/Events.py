@@ -1,19 +1,20 @@
 from tourney.classes import Common as Common
-from tourney.classes.Common import log as log
+from tourney.classes.Common import log as log, removeWhitespace as remWs, isInCharLimit as limCheck
 import datetime
 
 class Events:
     
     registry = {}
+    nameCharLimit = 30
 
-    def __init__(self, master=None, identifier=None, name=None):
+    def __init__(self, identifier=None, name=None):
         self.id = identifier
 
         self.name = name
 
         self.points = {}
         self.rankPoints = {}
-        self.addMultipleRanks = False
+        self.allowMultipleRanks = False
 
         self.status = None
         self.startTime = None
@@ -30,7 +31,7 @@ class Events:
             
         unqiueId = Common.uniqueIDGenerator(registry=cls.registry, prefix="EVENT")
 
-        newEvent = cls(master=cls, identifier=unqiueId, name=name)
+        newEvent = cls(identifier=unqiueId, name=name)
         newEvent.status = "Ready"
 
         cls.registry[unqiueId] = newEvent
@@ -112,7 +113,7 @@ class Events:
         return
     
     def readyEvent(self):
-        if self.status == "Ended":
+        if self.status == "Ended" or self.status is None:
             self.points = {}
             self.status = "Ready"
             log(f"{self.name} Event is ready.", "SUCCESS")
@@ -131,16 +132,14 @@ class Events:
 
         if self.status == "Ready":
             log(f"{self.name} Event cannot have a length when ready.", "ERROR")
-            return
+        return None
 
-    def rankSettings(self, ranks, points):
+    def rankSettings(self, ranks, points, allowMultipleRanks=None):
 
-        # Set removes duplicates. The application will check already. This is a fail-safe.
-        setRanks = set(ranks)
+        for rank, point in zip(ranks, points):
+            self.rankPoints[rank] = point
 
-        for rank in setRanks:
-            self.rankPoints[rank] = points
-        return
+        if not allowMultipleRanks is None: self.allowMultipleRanks = allowMultipleRanks
 
     def addTeam(self, team):
 
@@ -164,7 +163,7 @@ class Events:
         if team not in self.points:
             log(f"Team: {team} is not in this event", "ERROR")
             return
-        elif not self.addMultipleRanks:
+        elif not self.allowMultipleRanks:
             if self.rankPoints[team] > 0:
                 log(f"Team: {team} already gained a rank in this event", "ERROR")
 

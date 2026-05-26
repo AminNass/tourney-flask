@@ -1,15 +1,15 @@
 from tourney.classes import Common as Common
-from tourney.classes.Common import log as log
+from tourney.classes.Common import log as log, removeWhitespace as remWs, isInCharLimit as limCheck, zeroChar as zChar, timeNow as now
 from tourney import Main as Main
 import json
-from pathlib import Path
 
 class Members:
 
     registry = {}
-    saveDirectory = Main.Main.rootDirectory / "saveData" / "members"
+    nameCharLimit = 25
+    saveDirectory = Main.Main.saveDirectory / "Members"
 
-    def __init__(self, master=None, identifier=None, username=None, firstname=None, lastname=None):
+    def __init__(self, identifier=None, username=None, firstname=None, lastname=None):
         self.username = username
         self.firstname = firstname
         self.lastname = lastname
@@ -23,58 +23,74 @@ class Members:
     # Save Data
 
     @classmethod
-    def saveData(cls):
-        # Getting root directory
-        cls.saveDirectory.mkdir(parents=True, exist_ok=True) 
+    def saveData(cls, autoSave=False):
+        # Check if directory exists
+        cls.saveDirectory.mkdir(parents=True, exist_ok=True)
 
+        # Define file that the members will be saved in.
+        if autoSave:
+            file = cls.saveDirectory / f"(autoSave) Members-{now()}.json"
+        else:
+            log("Attempting to save data for members", "INFO")
+            file = cls.saveDirectory / "members.json"
+
+        # Declare a dictionary to hold all members
+        membersData = {}
+
+        # Loop through the registry and add them to the dictionary.
         for user in cls.registry.values():
-            memberData = {
-                "_comment": "Changing the id WILL break things.",
-                "ID": user.id,
+            # Using user.id as the unique key
+            membersData[user.id] = {
                 "Username": user.username,
                 "Firstname": user.firstname,
                 "Lastname": user.lastname
             }
 
-            # Creates filename
-            fileName = f"({user.id}) {user.username}.json"
-            with open(cls.saveDirectory / fileName, "w") as f:
-                json.dump(memberData, f, indent=4)
+        # Write the dictionary into the json file.
+        with open(file, "w") as f:
+            json.dump(membersData, f, indent=4)
 
-            log(f"{fileName} SAVED", "SUCCESS")
+        log(f"File at {file} has been saved", "SUCCESS")
 
     @classmethod
     def loadData(cls):
-        # Define the directory path
-        saveDirectory = Path(Main.Main.rootDirectory) / "saveData" / "members"
 
-        # Check if the directory exists to avoid errors.
-        if not saveDirectory.exists():
-            log("No save data directory found.", "ERROR")
+        file = cls.saveDirectory / "members.json"
+
+        # Check if file exists
+        if not file.exists():
+            log("No saved member data found.", "INFO")
             return
 
-        # Loop through every .json file in the folder
-        for filePath in saveDirectory.glob("*.json"):
-            try:
-                with open(filePath, "r") as f:
-                    data = json.load(f)
+        # Open the json and load it
+        with open(file, "r") as f:
+            membersData = json.load(f)
 
-                # Reconstruct the member object
+        # Declared to record the failed loading attempts.
+        failLoads = 0
+
+        # Loop through the dictionary
+        # userID is the key, MembersData is the value in the dictionary.
+        for userID, memberInfo in membersData.items():
+            try:
+                # Recreate member objects.
                 loadedMember = cls(
-                    identifier=data["ID"],
-                    username=data["Username"],
-                    firstname=data["Firstname"],
-                    lastname=data["Lastname"]
+                    identifier=userID,
+                    username=memberInfo["Username"],
+                    firstname=memberInfo["Firstname"],
+                    lastname=memberInfo["Lastname"]
                 )
 
-                # 5. Add it back into the registry dictionary
+                # Add it to the dictionary.
                 cls.registry[loadedMember.id] = loadedMember
-            
-                log(f"Loaded member: {loadedMember.username}", "SUCCESS")
-            
-            except Exception as e:
-                log(f"Failed to load {filePath.name}: {e}", "ERROR")
-    
+                log(f"Member '{loadedMember.username}' loaded.", "SUCCESS")
+
+            except KeyError as e:
+                failLoads = failLoads + 1
+                log(f"Failed to load user {userID} due to missing field: {e}", "ERROR")
+
+        log(f"Successfully loaded {len(cls.registry)} / {len(cls.registry) + failLoads} members.", "SUCCESS")
+
     #
     # Class Methods
     #
@@ -84,16 +100,23 @@ class Members:
     def createMember(cls, username, firstname, lastname):
 
         for ob in cls.registry.values():
-        # Checking for every value (Which is an object) in the registry is the same as the username arugement.
-            if ob.username == username:
+        # Checking for every value (Which is an object) in the registry is the same as the username argument.
+            if ob.username.lower() == username.lower():
                 log(f"The Username: {username} already exists.", "ERROR")
-                return None
+                return "Username already exists."
+
+        lim = cls.nameCharLimit
+
+        if not limCheck(username, lim) or not limCheck(firstname, lim) or not limCheck(lastname, lim):
+            log(f"Cannot create {username}, user, firstname or lastname is more than {lim} characters.", "ERROR")
+            return f"All names must be below {lim} characters."
 
         # Generates a unqiue ID.
         unqiueId = Common.uniqueIDGenerator(registry=cls.registry, prefix="USER")
-        
-        # Then it creates a new object of itself (cls) and puts in the arguements.
-        newMember = cls(master=cls, identifier=unqiueId, username=username, firstname=firstname, lastname=lastname)
+
+        # Then it creates a new object of itself (cls) and puts in the arguments.
+        # Added " ".join(text.split()) to remove white space and extra spaces.
+        newMember = cls(identifier=unqiueId, username=remWs(username), firstname=remWs(firstname), lastname=remWs(lastname))
 
         # Adds the member to the registry.
         cls.registry[unqiueId] = newMember
@@ -118,15 +141,29 @@ class Members:
     # class method to change member information
     @classmethod
     def changeInformation(cls, ob, newUsername=None, newFirstName=None, newLastname=None):
-        # Setting arguements to variables
-        username = newUsername
-        firstname = newFirstName
-        lastname = newLastname
+        # Setting arguements to variable
+        username = zChar(newUsername)
+        firstname = zChar(newFirstName)
+        lastname = zChar(newLastname)
 
-        # Keeps data that hasnt been changed.
-        if newUsername == None: username = ob.username
-        if newFirstName == None: firstname = ob.firstname
-        if newLastname == None: lastname = ob.lastname
+        lim = cls.nameCharLimit
+
+        if not limCheck(newUsername, lim) or not limCheck(newFirstName, lim) or not limCheck(newLastname, lim):
+            log(f"Cannot edit {ob.username}, user, firstname or lastname is more than {cls.nameCharLimit} characters.", "ERROR")
+            return f"All names entered must be below {cls.nameCharLimit} characters."
+
+        # Keeps data that hasn't been changed.
+        if username is None: username = ob.username
+        else:
+            for nob in cls.registry.values():
+                # Checking for every value (Which is an object) in the registry is the same as the username argument.
+                if nob.username.lower() == username.lower():
+                    log(f"The Username: {newUsername} already exists.", "ERROR")
+                    return "Username already exists."
+
+
+        if firstname is None: firstname = ob.firstname
+        if lastname is None: lastname = ob.lastname
 
         # Create a new object of itself:
         # Makes sure that the identifier stays the same by taking it from the original object.

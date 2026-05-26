@@ -2,14 +2,14 @@ import datetime
 
 from tourney.classes import Teams as Teams, Members as Members, Events as Events, Tourney as Tourney
 from tourney.app.App import App as AppModule
-from tourney.classes.Common import log as log
-import os
-from pathlib import Path
+from tourney.classes.Common import log as log, getDataDirectory as dataDir
 
 # Main Class
 class Main:
 
-    rootDirectory = Path(os.path.dirname(os.path.abspath(__file__)))
+    rootDirectory = dataDir()
+    saveDirectory = rootDirectory / "saveData"
+
 
     def __init__(self):
         self.appModule = AppModule("Tourney", "home")
@@ -22,23 +22,7 @@ class Main:
 
         # Load logic here, just pre creating for testing.
 
-        Members.Members.createMember(
-            username="Jack223",
-            firstname="JJack",
-            lastname="Stone"
-        )
-
-        Members.Members.createMember(
-            username="MikeA",
-            firstname="Mike",
-            lastname="Afton"
-        )
-
-        Members.Members.createMember(
-            username="JoeC",
-            firstname="Joe",
-            lastname="Clark"
-        )
+        Members.Members.loadData()
 
         log(f"Dictionary check: {list(Members.Members.getMemberRegistry())}")
 

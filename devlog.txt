@@ -207,7 +207,7 @@ Now I would want to create more helper functions. In this devlog I won't be expl
 but in my code I would have commented what each function does. I will be explaining my understanding,
 my decision-making and program design. I am the one who thinks far ahead when creating programs.
 
-For each but using the members as a example I will be making:
+For each but using the members as an example I will be making:
 
 @classmethod
 getMember(self, username):
@@ -283,4 +283,579 @@ Members.Members.getMemberInfo(object)
 By passing through the same object rather than calling from the object it will give the same result.
 
 a class method is a function that runs at the class level. It doesn't make any changes to any objects unless
-you have passed through an argument.
+you have passed through an object as an argument. Unlike object method where it uses self the class method uses,
+cls to reference its own class. you can use cls to access class variables for example the registry.
+
+cls.registry
+
+If a class method was called, and it was in the members class in instance then it will be able to access its variable.
+Object classes can access class variable, but they would have to do it like this: Members.Members.registry
+
+There is also a static method where it acts as a normal function as if it wasn't in a class. It doesn't use cls or self.
+
+@staticmethod
+myStaticFunction():
+
+You may pass through objects by adding it to the argument or access class variables through (Module).(Class).(variable)
+but there is no point and there are not a lot of situations where you would use this. Even though there isn't much use
+for it being inside a class if you ever use a static you must access the function as if it was an inside of the class:
+
+(module).(class).myStaticFunction()
+
+I already gave an example of a static function, but it's not a part of any class as it doesn't need to be. For example:
+
+uniqueIDGenerator(registry=Members.Members.registry, prefix="USER")
+
+This function is a static method, there isn't a need to put declare it as a static method since it's not inside a class.
+The best way to different between the 3 types functions is the default arguments it passes through. For Example:
+
+objectFunction(self):
+
+It is required to have 'self' inside the argument, or it will give an error if the function was inside a class.
+
+@classmethod
+classFunction(cls):
+
+It is required to have 'cls' inside the arguments, or wit will give an error if the function was inside a class.
+
+@staticmethod
+staticFunction():
+
+It isn't required to put anything, you may only put '@staticmethod' if it's inside a class unless it will get errors.
+
+To help with the functionality of the tourneys I want to update the tourney object variables. One change is I want to
+change the events variable to be a dictionary. The main reason why I want this change is I want to make a system like this:
+
+I want a brand-new instance of an event when it's added to a tourney. Then I want my own mini event registry inside
+every tourney object. The good thing about this is you can have multiple of the same event running. Even in the same tourney.
+All the data will be unique since when adding an event to a tourney it will create a deepcopy. To do this I will import copy.
+
+import copy
+
+...
+
+    ...
+    def addEvent(self, name, ob):
+
+        # Checks if this event name already exists in this tournament.
+        for event in self.events.values():
+            if event.name == name:
+                print(f"The Event: {name} already exists in this tournament.")
+                return None
+
+        # Creates a deep copy of this instance.
+        # This is so that if the original instance is changed in any way it will not affect this new instance.
+        # Changes to this instance will not change the original either.
+        newInstance = copy.deepcopy(ob)
+        newInstance.name = name
+        # This changes the name of the event.
+        # This can be anything that is not already inside the self.events
+
+        # Generates a unique ID with the prefix T.EVENT
+        uniqueID = Common.uniqueIDGenerator(registry=self.events, prefix="T.EVENT")
+
+        self.events[uniqueID] = newInstance
+        return newInstance
+    ...
+
+What I have done is I made it first check if the name entered already exists in the mini events registry stored
+inside the tourney object. As it would make sense for the names to be different for its exact purpose in the tourney.
+This it will use a function called deepcopy inside the copy module. a deepcopy will make a 1 to 1 clone of the object
+that I have passed through to it. I then update the new of the event to whatever the arguement is. I also use the same
+ID system I use but for this mini event registry passing through self.events as the registry and having the prefix
+set to 'T.EVENT' which stands for Tourney Event. It updates the stored events registry using the cloned object.
+
+An update to the events object variables is adding extra variables for ranks which will allow for the points system to work.
+
+class Events:
+
+    registry = {}
+
+    def __init__(self, master=None, identifier=None, name=None):
+        self.id = identifier
+
+        self.name = name
+
+        self.points = {}
+        self.rankPoints = {}
+        self.addMultipleRanks = False
+
+        self.status = None
+        self.startTime = None
+        self.endTime = None
+
+self.points:
+This still saves the team ID as the key and the amount of points as the value.
+
+self.rankPoints:
+This is further explanation and I will use the helper function to explain:
+
+    def rankSettings(self, ranks, points):
+
+        for rank, point in zip(ranks, points):
+            self.rankPoints[rank] = point
+
+I have created a function in the events class for rankSettings. How it works is you pass a list of ranks and a list of points.
+
+For example, you pass through the list of ranks
+
+rankList = ['Grand Master', 'Master', 'Intermediate', 'A-Effort']
+
+For example, you will pass the points for how much each rank gives. You must make the list in the same order since
+for the function to work correctly the rank and the points you want to assign must have the same index respectively.
+
+pointsList = [50, 25, 15, 5]
+
+Pass it through to the function:
+
+(tourneyObject).rankSettings(rankList, pointsList)
+
+As you can see in the function is uses a for loop. For every rank and point in rank and point it will add the rankPoints
+to the object using the ranks and points respectively. Also, the ranks and points are inside a function called zip.
+This useful function removes any duplicate ranks in the list and will automatically overwrite the latest point value.
+
+self.addMultipleRanks = False
+
+This default to False but to change this you can do:
+(object).addMultipleRanks = True
+
+I thought it didn't make sense to have a helper function to do something so simple. I might implement this but built in
+to the rankSettings function though. As of writing this I will do now:
+
+    def rankSettings(self, ranks, points, allowMultipleRanks=None):
+
+        for rank, point in zip(ranks, points):
+            self.rankPoints[rank] = point
+
+        if not allowMultipleRanks is None: self.allowMultipleRanks = allowMultipleRanks
+
+I added a line that checks of allowMultipleRanks is equal to None. When you add the equal sign to an argument that means it's not required.
+My code sets self.allowMultipleRanks = allowMultipleRanks, which is the argument set by the user. This allows if the argument was not set
+when the function is allowed, it will not change something the user did not set.
+
+self.status = None
+self.startTime = None
+self.endTime = None
+
+These variables are set for when an event is in a tourney. You can run the function:
+
+    def readyEvent(self):
+        if self.status == "Ended" or self.status is None:
+            self.points = {}
+            self.status = "Ready"
+            log(f"{self.name} Event is ready.", "SUCCESS")
+            return
+        elif self.status == "Started":
+            log(f"{self.name} Event cannot be ready when it has already started.", "ERROR")
+            return
+
+        log(f"{self.name} Event is already ready.", "ERROR")
+        return
+
+This will ready the event, it will make sure the status is none or set to ended before doing so or else you don't want
+an event that has already started to be set to ready. Also if its not of these options then we will assume its already ready.
+
+    def startEvent(self):
+        if self.status == "Ready":
+            startDateTime = datetime.datetime.now()
+            log(f"{self.name} Event has started: {startDateTime}", "SUCCESS")
+            self.startTime = startDateTime
+            self.status = "Started"
+            return
+
+        log(f"{self.name} Event is not ready yet", "ERROR")
+        return
+
+    def endEvent(self):
+        if self.status == "Started":
+            endDateTime = datetime.datetime.now()
+            log(f"{self.name} Event has ended: {endDateTime}", "SUCCESS")
+            self.endTime = endDateTime
+            self.status = "Ended"
+            return
+
+        log(f"{self.name} Event has not started.", "ERROR")
+        return
+
+These functions start an event, the start event only starts it when the event is ready. The end event only ends it when the event is started.
+
+    def eventLength(self):
+        if self.status == "Started": return datetime.datetime.now() - self.startTime
+
+        if self.status == "Ended": return self.startTime - self.endTime
+
+        if self.status == "Ready":
+            log(f"{self.name} Event cannot have a length when ready.", "ERROR")
+        return None
+
+This one is call because it imports a new module called datetime. This is used to get the eventLength.
+If the event status is tarted it will subtract the current time take away the self.startTime.
+If the event is ended it will subtract self.startTime and self.endTime since they will be set to something.
+if the event is ready there isn't any start or endtime. All of these are calumniators to get the event length.
+
+You may have noticed a new function called log. This function is really awesome since it makes tracing issues easier.
+
+ef log(message, type="INFO"):
+
+    # gets the callers frame of the function that called log.
+    callerFrame = inspect.currentframe().f_back
+    # Gets the caller function name.
+    functionName = callerFrame.f_code.co_name
+
+    if 'self' in callerFrame.f_locals:
+        callerClass = callerFrame.f_locals['self'].__class__.__name__
+    elif 'cls' in callerFrame.f_locals:
+        callerClass = callerFrame.f_locals['cls'].__name__
+    else:
+        callerClass = "Global"
+
+    print(f"{datetime.datetime.now()} - {type}: [{callerClass}] ({functionName}): {message}")
+    return type
+
+This function uses a module called inspect which allows you to get information from callers. I don't completely understand
+what these functions do exactly, but I know the callerFrame var is used to get the caller function and the function name is
+gotten by getting its name from the caller function.
+
+Then if statements are used to check if the caller function has self in it. Basically this checks if function from its class is an
+object method meaning it will contain 'self' in its local variables. If not then it will check if it has cls. If this is true
+then that would mean that the function is a class method. If its none of these then that means this function isn't inside a class.
+It then prints using the current date time. Also, a type which tells anyone looking at the logs what kind of log it is.
+
+Types that I currently use are 'INFO', 'SUCCESS' and 'ERROR'. That is basically all we would need. Super usefully function as it will make
+logs look like this:
+
+-
+2026-05-25 17:00:20.949191 - SUCCESS: [Members] (createMember): Member 'Jack223' created.
+2026-05-25 17:00:20.949200 - INFO: [Global] (uniqueIDGenerator): Generated: 241
+2026-05-25 17:00:20.949208 - SUCCESS: [Members] (createMember): Member 'MikeA' created.
+2026-05-25 17:00:20.949215 - INFO: [Global] (uniqueIDGenerator): Generated: 134
+2026-05-25 17:00:20.949220 - SUCCESS: [Members] (createMember): Member 'JoeC' created.
+2026-05-25 17:00:20.949228 - INFO: [Main] (onInitialize): Dictionary check: ['USER-670', 'USER-241', 'USER-134']
+2026-05-25 17:00:20.949234 - SUCCESS: [Members] (getMember): User found: JoeC
+2026-05-25 17:00:20.949239 - INFO: [Main] (onInitialize): Clark
+2026-05-25 17:00:20.949245 - INFO: [Global] (uniqueIDGenerator): Generated: 240
+2026-05-25 17:00:20.949252 - SUCCESS: [Teams] (createTeam): Team 'Team Falcons' created.
+2026-05-25 17:00:20.949259 - SUCCESS: [Members] (getMember): User found: MikeA
+2026-05-25 17:00:20.949264 - SUCCESS: [Teams] (addMember): Member(s) has been added.
+2026-05-25 17:00:20.949271 - INFO: [Global] (uniqueIDGenerator): Generated: 304
+-
+
+I have added a bunch of functions to complete a variety of tasks. I have basically built the base of the project.
+I have used object orientated programming to store data the way I want it. All I have to do now is create an interface
+where everything is easily interactable for the user. For this I am going to use two libraries to make this possible.
+
+One is flask which allows you to create web applications and its super powerfull. It litterally allows you to write Python code,
+inside of HTML however its limited but light weight and perfect for this project. Another libary is pywebview which will allow for a
+window to pop up and actually display the flask webapp. Webview is super light and perfect for this local app. No need for internet access.
+
+To get this to work I first want to redesign the main class, change the package structure and create a new package for where my app will be in.
+First most importantly is the app structure. In my root directory of my project almost every program in the world will have 'src' source folder.
+This will where all the code goes in, but first we need to create packages to keep everything in the right order. First package I made
+is the tourney package. To create a package you need to create a folder and add a '__init__.py' to let python know it's a package. I put
+the main class inside of this package. Second I made another package with the tourney package called 'classes' making sure to add '__init__.py'.
+Inside of this I put all my other classes inside. Back to the tourney package I then create a new package called app. This is where I am going
+to create the foundations for the interface. The first thing I did it create an App.py within the app package.
+
+First I will actually need to install flask and pywebview and I can do this by going to my terminal and running pip install flask and pip install pywebview.
+Now that being done I can import then inside my App.py module and all the other things I would need:
+
+from flask import Flask, render_template
+import webview
+from tourney.classes.Common import log as log
+from tourney.classes import Members as Members, Teams as Teams, Events as Events, Tourney as Tourney, Common as Common
+
+To create a webapp I would have to do the following:
+
+App = Flask(__name__)
+
+This will create the webapp but nothing will be displayed. This is where the pywebview come in.
+
+App = Flask(__name__)
+Window = webview.create_window("Tourney App", App)
+
+by setting a name and passthrough the flask App it will then be able to open a window.
+However, it will give an error since there aren't any menus. Before I do that I will then
+properly organize my Main class and App class.
+
+First I will be making my App class.
+
+class App:
+    def __init__(self, name):
+        self.name = "Tourney"
+        self.app = Flask(__name__)
+        self.appMenus()
+        self.window = webview.create_window(self.name, self.app, width=800, height=600, resizable=False)
+
+        log(f"Created app: {name}", "SUCCESS")
+
+    def appMenus(self):
+
+        @self.app.route("/")
+        @self.app.route("/home")
+        def home():
+            log(f"Getting ready to load page: home.html")
+            self.changeTitle("Home")
+
+            memberList = list(Members.Members.getMemberRegistry())
+            return render_template(
+                "home.html",
+                members=memberList
+            )
+
+    def startWindow(self):
+        webview.start()
+        log(f"Window started.", "SUCCESS")
+
+    def changeTitle(self, title):
+
+        def executeTitleChange(title):
+            self.window.title = f"Tourney - {title}"
+            log(f"Changed title to {title}", "SUCCESS")
+
+        threading.Thread(target=executeTitleChange, args=(title,), daemon=True).start()
+
+This is awsome because what I have done is combined both the Flask and pywebview class into one. Then in the main class
+I will be able to create an object of App which will set up everything for me. I have an argument called name which I will
+be able to set the window name to. Also, I had an issue when doing this. It was to do when I called self.appMenus() in the init.
+I cannot create a window with flask if their I haven't called self.appMenus() yet. A very important thing is once your window is
+nothing in it can be changed or added. So I must call self.appMenus() after I have created the flask app but before the window is created.
+
+
+Talking about the appMenus() function I will explain to what it does:
+
+@self.app.route("/")
+
+This will say to Flask that this is the root directory of the app. so when the window is created this is what is first loaded.
+
+@self.app.route("/")
+@self.app.route("/home")
+
+I have added a home because I want the first directory to be the home page.
+
+I have another function called changeTitle which would allow me to change titles for when I create more menus.
+As you can see is I am using a library called threading which allows code to run in a different thread from your
+main thread on your computer. The issue I was having is on first load changing the title when loading to the home page
+will cause it a long time to be loaded. Basically you cant change the title of the window when It's not fully loaded.
+What's responsible for loading the page is:
+
+return render_template(
+    "home.html",
+    members=memberList
+    )
+
+This renders a template but the changeTitle happens before the template is rendered, and you cannot put it after since
+no code will run after a 'return' is added in a function. This issue caused the app to freeze because the changeTitle
+process was waiting for the window to be ready but since code runs line by line, it cant wait for something when It's
+holding up since the next code is the render template. Threading for the code after to continue without it holding up
+anything since it running on a different CPU core. This is a call feature and I will be using this to optimize my program.
+
+How basically flask works is you can pass through variables and access them inside of HTML. You can create for loops to
+loop through a list inside the HTML its self. For example for I have made a members page:
+
+@self.app.route("/members")
+    def members():
+        log(f"Getting ready to load page: home.html")
+        self.changeTitle("Members")
+
+            #memberData = Members.Members.formatData()
+
+        return render_template(
+            "members.html",
+            members=list(Members.Members.getMemberRegistry().values())
+        )
+
+This takes the registry from the actual members class and passes it through into the html:
+
+<div>
+    <h2>Registered Members</h2>
+
+    <table style="width:100%">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Username</th>
+                <th>First Name</th>
+                <th>Last Name</th>
+            </tr>
+        </thead>
+        <tbody style="text-align: center;">
+            {% for member in members %}
+                <tr>
+                    <td>{{ member.id }}</td>
+                    <td>{{ member.username }}</td>
+                    <td>{{ member.firstname }}</td>
+                    <td>{{ member.lastname }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+What I have done is created a table. First I created the header by using <thead> which is for table head.
+<tr> this defines the row of cells in a table. <th> defines the row group. On the <tbody> table body is
+where the data goes. <tr> is used again. Then <td> defines a cell that contains data.
+
+inside the table body is a for loop meaning that HTML is going to be looped according to how many members they are.
+Every statement must be inside {% %}. The for looping is looping through every member in members. Since my menu code is
+passing through the members registry values as a list this could be done. Then to access variables you must put them
+inside {{ }}. This all the data is inside the object (The values in the registry) then can be easily accessed.
+You must add an end for to tell flask what HTML you want to stop repeating. What this is your passing data to this Menu
+and adding logic inside of this HTML to display it all correctly so that a user can read it.
+
+A small update:
+
+class App:
+    def __init__(self, name, loadhtml):
+        self.name = "Tourney"
+        self.loadhtml = loadhtml
+        self.app = Flask(__name__)
+        self.appMenus()
+        self.window = webview.create_window(self.name, self.app, width=800, height=600, resizable=False)
+
+        log(f"Created app: {name}, load page set to {loadhtml}.html", "SUCCESS")
+
+    def appMenus(self):
+
+        @self.app.route("/")
+        def launch():
+            log(f"Getting ready to load page: loading.html")
+            return render_template(
+                "loading.html",
+                loadhtml=self.loadhtml
+            )
+
+        @self.app.route("/home")
+        def home():
+            log(f"Getting ready to load page: home.html")
+            self.changeTitle("Home")
+
+            memberList = list(Members.Members.getMemberRegistry())
+            return render_template(
+                "home.html",
+                members=memberList
+            )
+
+        @self.app.route("/members")
+        def members():
+            log(f"Getting ready to load page: home.html")
+            self.changeTitle("Members")
+
+            #memberData = Members.Members.formatData()
+
+            return render_template(
+                "members.html",
+                members=list(Members.Members.getMemberRegistry().values())
+            )
+
+        @self.app.route("/about")
+        def about():
+            log(f"Getting ready to load page: about.html")
+            self.changeTitle("About")
+
+            return render_template(
+                "about.html"
+            )
+
+        log(f"Loaded all menus", "SUCCESS")
+
+    def startWindow(self):
+        webview.start()
+        log(f"Window started.", "SUCCESS")
+
+    def changeTitle(self, title):
+
+        def executeTitleChange(title):
+            self.window.title = f"Tourney - {title}"
+            log(f"Changed title to {title}", "SUCCESS")
+
+        threading.Thread(target=executeTitleChange, args=(title,), daemon=True).start()
+
+I have added the root directory to a loading HTML because I wanted to add a launch HTML option. Also its faster to load
+into an almost empty HTML file. As you can see inside:
+
+@self.app.route("/")
+    def launch():
+        log(f"Getting ready to load page: loading.html")
+        return render_template(
+            "loading.html",
+            loadhtml=self.loadhtml
+        )
+
+As you can see it loads the loading.html file first. It also passes through self.loadhtml. Which is:
+
+def __init__(self, name, loadhtml):
+    self.name = "Tourney"
+    self.loadhtml = loadhtml
+    self.app = Flask(__name__)
+    self.appMenus()
+    self.window = webview.create_window(self.name, self.app, width=800, height=600, resizable=False)
+
+    log(f"Created app: {name}, load page set to {loadhtml}.html", "SUCCESS")
+
+This is the name of the HTML file that you want to load. This allows for a debug menu used for advanced users.
+In sort, it allows to make the app load to a different menu on launch.
+
+Also, I have added an about menu just for info about the app and links to documentation.
+
+I haven't talked about the Main class update so here it is.
+
+class Main:
+
+    rootDirectory = Path(os.path.dirname(os.path.abspath(__file__)))
+
+    def __init__(self):
+        self.appModule = AppModule("Tourney", "home")
+
+    def run(self):
+        log(f"Starting app: {datetime.datetime.now()}", "SUCCESS")
+        self.onInitialize()
+
+    def onInitialize(self):
+
+        # Load logic here, just pre creating for testing.
+
+        Members.Members.createMember(
+            username="Jack223",
+            firstname="JJack",
+            lastname="Stone"
+        )
+
+        Members.Members.createMember(
+            username="MikeA",
+            firstname="Mike",
+            lastname="Afton"
+        )
+
+        Members.Members.createMember(
+            username="JoeC",
+            firstname="Joe",
+            lastname="Clark"
+        )
+
+        log(f"Dictionary check: {list(Members.Members.getMemberRegistry())}")
+
+        log(Members.Members.getMember(username="JoeC").lastname)
+
+        Teams.Teams.createTeam("Team Falcons")
+
+        Teams.Teams.getTeam(name="Team Falcons").addMember(Members.Members.getMember(username="MikeA"))
+
+        RLCS = Tourney.Tourney.createTourney("RLCS")
+
+        RLCS.addEvent("RLCS Major", Events.Events.createEvent("Major"))
+
+        log(Members.Members.formatData())
+
+        self.appModule.startWindow()
+
+if __name__ == "__main__":
+    app = Main()
+    app.run()
+
+What I have done is changed the main function name to run(). The first thing that launches is the init function which
+creates a new instance of the App class which is what I just made before. It then sets the name of the window to tourney
+and the load HTML to home menu. After the instance of main is created it will run run(). Then it will log the time the
+program started running and then will call onInitialize. This will be where all the initialization code will run.
+For the future this will be loading the persistent data onto all the registries. For now I just pre created some members,
+teams, events and tourneys: The last thing is to run self.appModule.startWindow(). This will start the window.
+

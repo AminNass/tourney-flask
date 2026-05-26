@@ -1,15 +1,78 @@
+import json
+
+from tourney import Main
 from tourney.classes import Members as Members, Common as Common
-from tourney.classes.Common import log as log
+from tourney.classes.Common import log as log, removeWhitespace as remWs, isInCharLimit as limCheck, timeNow as now
 
 class Teams:
 
     registry = {}
+    saveDirectory = Main.Main.saveDirectory / "Teams"
+    nameCharLimit = 25
 
-    def __init__(self, master=None, identifier=None, name=None):
+    def __init__(self, identifier=None, name=None, members=list):
         self.name = name
         self.id = identifier
 
-        self.members = []
+        self.members = members
+
+    # Save Data
+
+    @classmethod
+    def saveData(cls, autoSave=False):
+
+        cls.saveDirectory.mkdir(parents=True, exist_ok=True)
+
+        if autoSave: file = cls.saveDirectory / f"(autoSave) Teams-{now()}.json"
+        else:
+            log("Attempting to save data for teams.", "INFO")
+            file = cls.saveDirectory / "Teams.json"
+
+        teamsData = {}
+
+        for team in cls.registry.values():
+
+            teamsData[team.id] = {
+                "name": team.name,
+                "members": team.members
+            }
+
+        with open(file, "w") as f:
+            json.dump(teamsData, f, indent=4)
+
+    @classmethod
+    def loadData(cls):
+
+        file = cls.saveDirectory / "Teams.json"
+
+        if not file.exists():
+            log("No Teams data found.", "INFO")
+            return
+
+        with open(file, "r") as f:
+            teamsData = json.load(f)
+
+        # Declared to record the failed loading attempts.
+        failLoads = 0
+
+        for teamID, teamInfo in teamsData.items():
+            try:
+
+                loadedTeam = cls(
+                    identifier=teamID,
+                    name=teamInfo["name"],
+                    members=teamInfo["members"]
+                )
+
+                cls.registry[loadedTeam.id] = loadedTeam
+                log(f"Team '{loadedTeam.name}' loaded.", "SUCCESS")
+
+            except KeyError as e:
+                failLoads = failLoads + 1
+                log(f"({failLoads}) Failed to load user {teamID} due to missing field: {e}", "ERROR")
+
+            log(f"Successfully loaded {len(cls.registry)} / {len(cls.registry) + failLoads} teams.", "SUCCESS")
+
 
     #
     # Class Functions
@@ -31,7 +94,7 @@ class Teams:
         # Generates a unqiue ID.
         unqiueId = Common.uniqueIDGenerator(registry=cls.registry, prefix=prefix)
         # creates a new team as an object.
-        newTeam = cls(master=cls, identifier=unqiueId, name=name)
+        newTeam = cls(identifier=unqiueId, name=name)
         if type == "I":
             del newTeam.members
             newTeam.member = None

@@ -1,12 +1,13 @@
 from tourney.classes import Common as Common, Events as Events
-from tourney.classes.Common import log as log
+from tourney.classes.Common import log as log, removeWhitespace as remWs, isInCharLimit as limCheck
 import copy
 
 class Tourney:
 
     registry = {}
+    nameCharLimit = 100
 
-    def __init__(self, master=None, identifier=None, name=None):
+    def __init__(self, identifier=None, name=None):
         self.id = identifier
 
         self.name = name
@@ -23,7 +24,7 @@ class Tourney:
             
         unqiueId = Common.uniqueIDGenerator(registry=cls.registry, prefix="TRN")
 
-        newTourney = cls(master=cls, identifier=unqiueId, name=name)
+        newTourney = cls(identifier=unqiueId, name=name)
 
         cls.registry[unqiueId] = newTourney
         log(f"Team '{name}' created.", "SUCCESS")

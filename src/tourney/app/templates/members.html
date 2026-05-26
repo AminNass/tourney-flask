@@ -2,8 +2,75 @@
 
 {% block title %}Home{% endblock %}
 
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/members.css') }}">
+
+<script src="{{ url_for('static', filename='js/members.js') }}?v={{ range(1, 99999)|random }}"></script>
+{% endblock %}
+
 {% block content %}
-    <div class="container">
+
+    <div style="background: dimgray; padding: 10px; margin-bottom: 25px; color: white;">
+        <h3>Register New Member</h3>
+
+        <div style="margin-bottom: 10px;">
+            <label>Username:</label><br>
+            <input type="text" id="inputUsername">
+        </div>
+
+        <div style="margin-bottom: 10px;">
+            <label>First Name:</label><br>
+            <input type="text" id="inputFirstname">
+        </div>
+
+        <div style="margin-bottom: 15px;">
+            <label>Last Name:</label><br>
+            <input type="text" id="inputLastname">
+        </div>
+
+        <button onclick="submitMemberForm()">Submit Registration</button>
+    </div>
+
+    <div id="editMemberForm">
+        <h3>Editing Member:</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Username</th>
+                    <th>Firstname</th>
+                    <th>Lastname</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td id="tableEditMemberForm-ID"></td>
+                    <td id="tableEditMemberForm-Username"></td>
+                    <td id="tableEditMemberForm-Firstname"></td>
+                    <td id="tableEditMemberForm-Lastname"></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div style="margin-bottom: 10px;">
+            <label>Username:</label><br>
+            <input type="text" id="inputEditUsername">
+        </div>
+
+        <div style="margin-bottom: 10px;">
+            <label>First Name:</label><br>
+            <input type="text" id="inputEditFirstname">
+        </div>
+
+        <div style="margin-bottom: 15px;">
+            <label>Last Name:</label><br>
+            <input type="text" id="inputEditLastname">
+        </div>
+
+        <button onclick="submitEditMemberForm()">Submit Change</button>
+    </div>
+
+    <div>
         <h2>Registered Members</h2>
 
         <table style="width:100%">
@@ -13,6 +80,7 @@
                     <th>Username</th>
                     <th>First Name</th>
                     <th>Last Name</th>
+                    <th>Edit</th>
                 </tr>
             </thead>
             <tbody style="text-align: center;">
@@ -22,6 +90,7 @@
                     <td>{{ member.username }}</td>
                     <td>{{ member.firstname }}</td>
                     <td>{{ member.lastname }}</td>
+                    <td><button onclick="editMember('{{ member.id }}', '{{ member.username }}', '{{ member.firstname }}', '{{ member.lastname }}')">[]</button></td>
                 </tr>
                 {% endfor %}
             </tbody>

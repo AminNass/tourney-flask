@@ -1,5 +1,10 @@
+import os
 import random
 import datetime
+import platform
+
+from pathlib import Path
+
 from tourney.classes import Members as Members
 import inspect
 
@@ -35,3 +40,36 @@ def log(message, type="INFO"):
 
     print(f"{datetime.datetime.now()} - {type}: [{callerClass}] ({functionName}): {message}")
     return type
+
+def removeWhitespace(string):  return " ".join(string.split())
+
+def isInCharLimit(string, limit): return len(removeWhitespace(string)) <= limit
+
+def zeroChar(string):
+    if string == "":
+        return None
+    return string
+
+def getDataDirectory():
+
+    log(f"Getting data directory: {platform.system()}")
+    # Gets the app directories for the OS for
+    if os.name == 'nt':  # Windows
+        baseDirectory = os.environ.get('APPDATA')
+    elif os.uname().sysname == 'Darwin':  # macOS
+        baseDirectory = os.path.expanduser('~/Library/Application Support')
+    else:  # Linux
+        baseDirectory = os.path.expanduser('~/.config')
+
+    log(f"Machine data directory: {baseDirectory}")
+
+    appDataPath = Path(baseDirectory) / "TourneyApp"
+
+    appDataPath.mkdir(parents=True, exist_ok=True)
+
+    log(f"App data path: {appDataPath}")
+
+    return appDataPath
+
+def timeNow():
+    return datetime.datetime.now()
