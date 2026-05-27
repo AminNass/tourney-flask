@@ -1,5 +1,5 @@
 from tourney.classes import Common as Common
-from tourney.classes.Common import log as log, removeWhitespace as remWs, isInCharLimit as limCheck, zeroChar as zChar, timeNow as now
+from tourney.classes.Common import saveDataDirectory as saveDir, log as log, removeWhitespace as remWs, isInCharLimit as limCheck, zeroChar as zChar, timeNow as now
 from tourney import Main as Main
 import json
 
@@ -7,7 +7,7 @@ class Members:
 
     registry = {}
     nameCharLimit = 25
-    saveDirectory = Main.Main.saveDirectory / "Members"
+    saveDirectory = saveDir() / "Members"
 
     def __init__(self, identifier=None, username=None, firstname=None, lastname=None):
         self.username = username

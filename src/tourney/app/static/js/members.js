@@ -101,3 +101,47 @@ function submitEditMemberForm() {
             }
         })
 }
+
+// Delete Member
+
+function deleteMember() {
+    const memberID = document.getElementById("tableEditMemberForm-ID");
+    const usernameElement = document.getElementById("tableEditMemberForm-Username");
+
+    const data = {
+        memberID: memberID.textContent,
+        username: usernameElement.textContent
+    }
+
+    console.log("Sending data to Python Flask", data);
+
+    fetch('/api/deleteMember', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+    })
+        .then(response => {
+            // get response from flask.
+            return response.json();
+        })
+        .then(data => {
+            // If successful then:
+            if (data.status === "success") {
+                console.log(data.message);
+                document.getElementById("editMemberForm").classList.remove("visible");
+                window.location.reload();
+            } else {
+                // Else print error.
+                alert("Error: " + data.message);
+            }
+        })
+}
+
+function saveMembers() {
+    fetch('/api/saveMembers', {
+        method: 'POST',
+    })
+}
+

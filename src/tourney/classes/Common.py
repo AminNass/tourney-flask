@@ -71,5 +71,8 @@ def getDataDirectory():
 
     return appDataPath
 
+def saveDataDirectory():
+    return getDataDirectory() / "SaveData"
+
 def timeNow():
     return datetime.datetime.now()

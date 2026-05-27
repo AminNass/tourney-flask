@@ -1,9 +1,7 @@
-import threading
-import time
-
 from flask import Flask, render_template, jsonify, request
-
 import webview
+import threading
+
 from tourney.classes.Common import log as log
 from tourney.classes import Members as Members, Teams as Teams, Events as Events, Tourney as Tourney, Common as Common
 
@@ -60,8 +58,6 @@ class App:
             log(f"Getting ready to load page: about.html")
             self.changeTitle("About")
 
-            Members.Members.saveData()
-
             return render_template(
                 "about.html"
             )
@@ -110,6 +106,27 @@ class App:
                 return jsonify({"status": "error", "message": f"{editedMember}"})
 
         log(f"Loaded API", "SUCCESS")
+
+        @self.app.route("/api/deleteMember", methods=["POST"])
+        def deleteMember():
+            log("Received request to delete a member")
+
+            data = request.get_json()
+
+            deletedMember = Members.Members.removeMember(Members.Members.getMember(id=data.get("memberID")))
+
+            if deletedMember:
+                return jsonify({"status": "success", "message": f"Member with username: {data.get("username")} has been deleted."})
+            else:
+                return jsonify({"status": "error", "message": f"Could not find member in registry."})
+
+        @self.app.route("/api/saveMembers", methods=["POST"])
+        def saveMembers():
+            log("Received request to save members.")
+
+            Members.Members.saveData()
+
+            return jsonify({"status": "success", "message": f"Saved members successfully."})
 
     def startWindow(self):
         log(f"Window started successfully", "SUCCESS")

@@ -1,20 +1,21 @@
 import json
 
-from tourney import Main
 from tourney.classes import Members as Members, Common as Common
-from tourney.classes.Common import log as log, removeWhitespace as remWs, isInCharLimit as limCheck, timeNow as now
+from tourney.classes.Common import saveDataDirectory as saveDir, log as log, removeWhitespace as remWs, isInCharLimit as limCheck, timeNow as now
 
 class Teams:
 
     registry = {}
-    saveDirectory = Main.Main.saveDirectory / "Teams"
+    saveDirectory = saveDir() / "Teams"
     nameCharLimit = 25
 
-    def __init__(self, identifier=None, name=None, members=list):
+    def __init__(self, identifier=None, name=None, members=[]):
+        if members is None:
+            members = [list]
         self.name = name
         self.id = identifier
 
-        self.members = members
+        self.members = []
 
     # Save Data
 
