@@ -6,14 +6,12 @@ function submitMemberForm() {
     const firstnameElement = document.getElementById("inputFirstname");
     const lastnameElement = document.getElementById("inputLastname");
 
-    // Creating an object so it can be sent clearly
+    // Creating an dictionary so it can be sent clearly
     const data = {
         username: usernameElement.value.trim(),
         firstname: firstnameElement.value.trim(),
         lastname: lastnameElement.value.trim(),
     };
-
-    console.log("Sending data to Python Flask", data);
 
     // Send data to flask by using fetch.
     fetch('/api/createMember', {
@@ -34,7 +32,6 @@ function submitMemberForm() {
                 firstnameElement.value = "";
                 lastnameElement.value = "";
 
-                console.log(data.message);
                 window.location.reload();
             } else {
                 // If response is not successful then output error.
@@ -76,8 +73,6 @@ function submitEditMemberForm() {
         lastname: lastnameElement.value.trim(),
     }
 
-    console.log("Sending data to Python Flask", data);
-
     fetch('/api/editMember', {
         method: 'POST',
         headers: {
@@ -92,7 +87,6 @@ function submitEditMemberForm() {
         .then(data => {
             // If successful then:
             if (data.status === "success") {
-                console.log(data.message);
                 document.getElementById("editMemberForm").classList.remove("visible");
                 window.location.reload();
             } else {
@@ -113,8 +107,6 @@ function deleteMember() {
         username: usernameElement.textContent
     }
 
-    console.log("Sending data to Python Flask", data);
-
     fetch('/api/deleteMember', {
         method: 'POST',
         headers: {
@@ -129,7 +121,6 @@ function deleteMember() {
         .then(data => {
             // If successful then:
             if (data.status === "success") {
-                console.log(data.message);
                 document.getElementById("editMemberForm").classList.remove("visible");
                 window.location.reload();
             } else {

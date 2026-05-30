@@ -1,7 +1,7 @@
 import json
 
-from tourney.classes import Members as Members, Common as Common
-from tourney.classes.Common import saveDataDirectory as saveDir, log as log, removeWhitespace as remWs, isInCharLimit as limCheck, timeNow as now
+
+from tourney.classes.Common import uniqueIDGenerator, saveDataDirectory as saveDir, log as log, removeWhitespace as remWs, isInCharLimit as limCheck, zeroChar as zChar, timeNow as now
 
 class Teams:
 
@@ -9,13 +9,12 @@ class Teams:
     saveDirectory = saveDir() / "Teams"
     nameCharLimit = 25
 
-    def __init__(self, identifier=None, name=None, members=[]):
-        if members is None:
-            members = [list]
+    def __init__(self, identifier=None, name=None, members=None):
         self.name = name
         self.id = identifier
 
-        self.members = []
+        if members is None: members = []
+        self.members = members
 
     # Save Data
 
@@ -84,24 +83,30 @@ class Teams:
 
         for ob in cls.registry.values():
         # Checking for every value (Which is an object) in the registry is the same as the name argument.
-            if ob.name == name:
+            if ob.name.lower() == remWs(name.lower()):
                 log(f"The Team name: {name} already exists.", "ERROR")
-                return None
+                return "Name already exists."
 
         prefix = "TEAM"
 
         if type == "I": prefix = "I.TEAM"
 
+        lim = cls.nameCharLimit
+
+        if not limCheck(name, lim):
+            log(f"Cannot create [{prefix}: {name}], name is more than {lim} characters.", "ERROR")
+            return f"Name must be below {lim} characters."
+
         # Generates a unqiue ID.
-        unqiueId = Common.uniqueIDGenerator(registry=cls.registry, prefix=prefix)
+        uniqueId = uniqueIDGenerator(registry=cls.registry, prefix=prefix)
         # creates a new team as an object.
-        newTeam = cls(identifier=unqiueId, name=name)
+        newTeam = cls(identifier=uniqueId, name=remWs(name))
         if type == "I":
             del newTeam.members
             newTeam.member = None
 
         # Adds new team to registry.
-        cls.registry[unqiueId] = newTeam
+        cls.registry[uniqueId] = newTeam
         log(f"Team '{name}' created.", "SUCCESS")
         # Returns the new team to be used in the main class.
         return newTeam
@@ -119,6 +124,35 @@ class Teams:
             log(f"Team: {ob.name} not found", "ERROR")
             return False
 
+    @classmethod
+    def changeInformation(cls, ob, newName=None):
+        # Setting arguements to variable
+        name = zChar(newName)
+
+        if name is None:
+            name = ob.name
+            return "You did not enter any name."
+
+        lim = cls.nameCharLimit
+
+        if not limCheck(newName, lim):
+            log(f"Cannot edit {ob.name}, name is more than {cls.nameCharLimit} characters.",
+                "ERROR")
+            return f"The name entered must be below {cls.nameCharLimit} characters."
+
+        for nob in cls.registry.values():
+            # Checking for every value (Which is an object) in the registry is the same as the name argument.
+            if nob.name.lower() == name.lower():
+                log(f"The Username: {newName} already exists.", "ERROR")
+                return "Username already exists."
+
+        # Create a new object of itself:
+        newTeam = cls(identifier=ob.id, name=name, members=ob.members)
+
+        # Updates the registry, using the id.
+        cls.registry[ob.id] = newTeam
+        # Returns the new updated object.
+        return newTeam
 
     @classmethod
     def getTeam(cls, id=None, name=None):
@@ -133,6 +167,7 @@ class Teams:
                 if ido.id == id:
                     # Return the value in the registry (Which is the object).
                     return ido
+            return f"Could not find team with id: {id}"
         # Runs when id is none and name is something other than None.
         elif not name == None:
             for ob in cls.registry.values():
@@ -140,10 +175,11 @@ class Teams:
                 if ob.name == name:
                     # Returns when found the name.
                     return ob
+            return f"Could not find team with name: {name}"
         else:
             # Returns nothing when both arugments are None.
             log(f"No arguements was entered", "ERROR")
-            return None
+            return "No arugments was entered."
             
         # Returns None when no team is found in the registry with the ID or Username.
         log(f"No team was found with the name: {name} or the ID: {id}", "ERROR")
@@ -166,26 +202,32 @@ class Teams:
             # Loops through every Member ID
             for j in args:
                 if i == j.id:
-                    log(f"{j}, is already a member of {i}", "ERROR")
-                    return None
+                    log(f"{j.username}, is already a member of {self.name}", "ERROR")
+                    return "This member is already a member of this team."
         
         for i in args:
             self.members.append(i.id)
         log(f"Member(s) has been added.", "SUCCESS")
-        return None
-    
+        return True
+
+    # This function expects ids.
+    # I made it like java for loop.
     def removeMember(self, *args):
         
         for i in args:
-            for j in range(len(self.members) - 1):
+            for j in range(len(self.members)):
+                log(f"{j}, {i}: {len(self.members)}.", "ERROR")
                 if i == self.members[j]:
                     self.members.pop(j)
-                    continue
-                log(f"{i.username} cannot be found in members: Skipping", "ERROR")
+                    log(f"REMOVED: {i} {j}: {len(self.members)}", "SUCCESS")
+                    break
+                log(f"{i} cannot be found in members: Skipping", "ERROR")
         log(f"Member(s) has been removed.", "SUCCESS")
         return
 
     def getMembers(self):
+        from tourney.classes import Members as Members
+
         foundMembers = []
         # Get Member registry
         memberRegistry = Members.Members.getMemberRegistry()

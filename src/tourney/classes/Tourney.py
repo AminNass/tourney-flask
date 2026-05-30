@@ -1,5 +1,4 @@
-from tourney.classes import Common as Common, Events as Events
-from tourney.classes.Common import log as log, removeWhitespace as remWs, isInCharLimit as limCheck
+from tourney.classes.Common import uniqueIDGenerator, log as log, removeWhitespace as remWs, isInCharLimit as limCheck
 import copy
 
 class Tourney:
@@ -22,7 +21,7 @@ class Tourney:
                 log(f"The tourney: {name} already exists.", "ERROR")
                 return None
             
-        unqiueId = Common.uniqueIDGenerator(registry=cls.registry, prefix="TRN")
+        unqiueId = uniqueIDGenerator(registry=cls.registry, prefix="TRN")
 
         newTourney = cls(identifier=unqiueId, name=name)
 
@@ -94,7 +93,7 @@ class Tourney:
         # This can be anything that is not already inside the self.events
 
         # Generates a unique ID with the prefix T.EVENT
-        uniqueID = Common.uniqueIDGenerator(registry=self.events, prefix="T.EVENT")
+        uniqueID = uniqueIDGenerator(registry=self.events, prefix="T.EVENT")
 
         self.events[uniqueID] = newInstance
         return newInstance
@@ -140,6 +139,7 @@ class Tourney:
         return None
 
     def checkEventDeletion(self):
+        from tourney.classes import Events as Events
 
         # Gets events registry
         eventsRegistry = Events.Events.registry

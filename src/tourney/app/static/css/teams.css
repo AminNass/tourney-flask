@@ -1,0 +1,7 @@
+#editTeamForm {
+    display: none;
+}
+
+#editTeamForm.visible {
+    display: block;
+}

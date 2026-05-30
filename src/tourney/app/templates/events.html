@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+
+{% block title %}Home{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/events.css') }}">
+
+<script src="{{ url_for('static', filename='js/events.js') }}?v={{ range(1, 99999)|random }}"></script>
+{% endblock %}
+
+{% block content %}
+
+    <div style="background: dimgray; padding: 10px; margin-bottom: 25px; color: white;">
+        <h3>Register New Event</h3>
+
+        <div style="margin-bottom: 10px;">
+            <label>Name:</label><br>
+            <input type="text" id="inputName">
+        </div>
+
+        <button onclick="submitEventForm()">Submit Registration</button>
+    </div>
+
+    <div id="editEventForm">
+        <h3>Editing team:</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Ranks</th>
+                    <th>Multi Ranks</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td id="tableEditEventForm-ID"></td>
+                    <td id="tableEditEventForm-Name"></td>
+                    <td id="tableEditEventForm-Ranks"></td>
+                    <td id="tableEditEventForm-MultiRank"></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div style="margin-bottom: 10px;">
+            <label>Name:</label><br>
+            <input type="text" id="inputEditName">
+        </div>
+
+        <button onclick="submitEditEventForm()">Submit Changes</button>
+        <button onclick="submitDeleteEventForm()">Delete Team</button>
+    </div>
+
+    <hr>
+
+    <button onclick="saveEvents()">Save All Events</button>
+
+    <div>
+        <h2>Registered Teams</h2>
+
+        <table style="width:100%">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Ranks</th>
+                    <th>Multi Ranks</th>
+                    <th>Edit</th>
+                </tr>
+            </thead>
+            <tbody style="text-align: center;">
+                {% for event in events %}
+                <tr>
+                    <td>{{ event.id }}</td>
+                    <td>{{ event.name }}</td>
+                    <td>
+                        <select>
+                        {% for rank in event.rankPoints %}
+                            <option>{{ rank }} = {{ event.rankPoints[rank] }}</option>
+                        {% endfor %}
+                        </select>
+                    </td>
+                    <td>{{ event.allowMultipleRanks }}</td>
+                    <td><button onclick="editEvent('{{ event.id }}', '{{ event.name }}', '{{ (event.rankPoints.keys() | list) | tojson | forceescape }}', '{{ event.allowMultipleRanks }}')">[]</button></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

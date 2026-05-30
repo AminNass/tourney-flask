@@ -8,9 +8,9 @@
     {% endblock %}
 
 </head>
-<body style="display: flex; margin: 0; height: 100vh;">
+<body style="display: flex; margin: 0; height: 1fr;">
 
-    <aside style="width: 20%; background-color: #eee; padding: 10px;">
+    <aside style="width: 20%; height: 1fr; background-color: lightgray; padding: 10px;">
         <a href="/home">Home</a>
         <br><br>
         <a href="/members">Members</a>
@@ -24,7 +24,7 @@
         <a href="/about">About</a>
     </aside>
 
-    <section style="width: 80%; padding: 20px;">
+    <section style="width: 80%; height: 1fr; padding: 20px;">
         {% block content %}
         {% endblock %}
     </section>

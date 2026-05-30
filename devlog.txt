@@ -856,6 +856,237 @@ What I have done is changed the main function name to run(). The first thing tha
 creates a new instance of the App class which is what I just made before. It then sets the name of the window to tourney
 and the load HTML to home menu. After the instance of main is created it will run run(). Then it will log the time the
 program started running and then will call onInitialize. This will be where all the initialization code will run.
-For the future this will be loading the persistent data onto all the registries. For now I just pre created some members,
+For the future this will be loading the persistent data onto all the registries. For now, I just pre created some members,
 teams, events and tourneys: The last thing is to run self.appModule.startWindow(). This will start the window.
 
+One of the features I want to make is the create members feature. The best way I learnt to do this is to make the HTML
+send requests to Flask. The HTML does involve JavaScript, but it's really simple. I decided to make another function
+defining all the api requests. This is my fully working version of creating a member in my app:
+
+    def appAPI(self):
+
+        @self.app.route(f"/api/createMember", methods=["POST"])
+        def createMember():
+            log("Received request to create a new member")
+
+            data = request.get_json()
+            username = data.get("username")
+            firstname = data.get("firstname")
+            lastname = data.get("lastname")
+
+            if not username or not firstname or not lastname:
+                log("Failed to create member: Missing Fields", "ERROR")
+                return jsonify({"status": "error", "message": "All fields are required"})
+
+            newMember = Members.Members.createMember(username, firstname, lastname)
+
+            if isinstance(newMember, Members.Members):
+                return jsonify({"status": "success", "message": f"Member with username: {newMember.username} has been created."})
+            else:
+                return jsonify({"status": "error", "message": f"{newMember}"})
+
+This uses the same flask system however I have decided to put /api/ for every API feature. The Method is posts meaning our web app will
+post to flask sending all the data we need to create a member. Request are sent in a JSON format which is a popular choice. I first declare a
+variable for all the data. I get the data by using 'request' which is front the flask library. I can get the entries in the data by using get
+and the key. I first check if there is anything in the data since to create a member there must be username, firstname and lastname.
+
+Then I create the member by using my own function. Then I am checking variable is an instance of the members class. To understand this I have
+updated by code for when creating a member:
+
+@classmethod
+    def createMember(cls, username, firstname, lastname):
+
+        for ob in cls.registry.values():
+        # Checking for every value (Which is an object) in the registry is the same as the username argument.
+            if ob.username.lower() == username.lower():
+                log(f"The Username: {username} already exists.", "ERROR")
+                return "Username already exists."
+
+        lim = cls.nameCharLimit
+
+        if not limCheck(username, lim) or not limCheck(firstname, lim) or not limCheck(lastname, lim):
+            log(f"Cannot create {username}, user, firstname or lastname is more than {lim} characters.", "ERROR")
+            return f"All names must be below {lim} characters."
+
+        # Generates a unqiue ID.
+        unqiueId = Common.uniqueIDGenerator(registry=cls.registry, prefix="USER")
+
+        # Then it creates a new object of itself (cls) and puts in the arguments.
+        # Added " ".join(text.split()) to remove white space and extra spaces.
+        newMember = cls(identifier=unqiueId, username=remWs(username), firstname=remWs(firstname), lastname=remWs(lastname))
+
+        # Adds the member to the registry.
+        cls.registry[unqiueId] = newMember
+        log(f"Member '{username}' created.", "SUCCESS")
+        # Returns the new member to né used in the main class.
+        return newMember
+
+The first check just loops through every username in the registry and compares it to the user entry. This isn't new, but
+I did add something new which is the lower() function. What this does is makes the entire string lowercase. Since I don't
+want usernames to be the same just because they are in different lower/upper cases. The bigger change is that other than
+return nothing it now returns a string describing the failed validation. This means if the username already exists in
+the registry it will return a string rather than an instance of the members class. Meaning this check:
+
+if isinstance(newMember, Members.Members):
+
+Will be false, basically telling my flask API that the creation of the member failed.
+
+else:
+    return jsonify({"status": "error", "message": f"{newMember}"})
+
+Meaning this code will run, which prints out the newMember variable. Since the validation failed due to the username
+already exists. And it's returning a string it will actually print out the string it returned.
+
+        lim = cls.nameCharLimit
+
+        if not limCheck(username, lim) or not limCheck(firstname, lim) or not limCheck(lastname, lim):
+            log(f"Cannot create {username}, user, firstname or lastname is more than {lim} characters.", "ERROR")
+            return f"All names must be below {lim} characters."
+
+What this does is check if the username, firstname and lastname is above the specified amount of characters.
+This variable comes from a class variable which I defined as nameCharLimit = 25. Meaning the limit is 25 characters.
+This limCheck function which the amount of characters and returns true or false. If true then it has passed this check.
+
+def isInCharLimit(string, limit): return len(removeWhitespace(string)) <= limit
+
+This is the function which is just a line of code and I put it in the Common.py module. The first thing you can see in
+the function is that it returns a boolean (True or False). When even you put a comparison operator it will always be
+a type boolean. len() this is a function that returns the amount of characters a string has. the remove whitespace function
+just removes any extra spaces added like ones that are at the start, end or extra between words. This makes it so its
+counted accurately to how it will be saved and used.
+
+It then checks if the length of the name in instance is less than or equal to the limit. If the name is less than the
+limit it will pass causing it to return true. If the name is long than the limit then it will return false falling
+the test. If all the validation tests pass in the member creation process it will then:
+
+return newMember
+
+Meaning this check in my API:
+
+if isinstance(newMember, Members.Members):
+
+Will pass since it has returned the newly created member which is an instance of the member class.
+
+Now on how it will be displayed.
+
+    <div style="background: dimgray; padding: 10px; margin-bottom: 25px; color: white;">
+        <h3>Register New Member</h3>
+
+        <div style="margin-bottom: 10px;">
+            <label>Username:</label><br>
+            <input type="text" id="inputUsername">
+        </div>
+
+        <div style="margin-bottom: 10px;">
+            <label>First Name:</label><br>
+            <input type="text" id="inputFirstname">
+        </div>
+
+        <div style="margin-bottom: 15px;">
+            <label>Last Name:</label><br>
+            <input type="text" id="inputLastname">
+        </div>
+
+        <button onclick="submitMemberForm()">Submit Registration</button>
+    </div>
+
+This is the snippet for how the form will look like. Basically this form has 3 <input>'s: Username, firstname and lastname.
+Each has an id inputUsername, inputFirstname and inputLastname. This input tag allows for a working input boxing allowing
+for users to enter text in it. Lastly there is a button that calls a JavaScript which is always quite simple.
+
+// Submit member form
+function submitMemberForm() {
+
+    // Get the HTML input elements
+    const usernameElement = document.getElementById("inputUsername");
+    const firstnameElement = document.getElementById("inputFirstname");
+    const lastnameElement = document.getElementById("inputLastname");
+
+    // Creating an dictionary so it can be sent clearly
+    const data = {
+        username: usernameElement.value.trim(),
+        firstname: firstnameElement.value.trim(),
+        lastname: lastnameElement.value.trim(),
+    };
+
+    // Send data to flask by using fetch.
+    fetch('/api/createMember', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+    })
+        .then(response => {
+            // Get response from flask.
+            return response.json();
+        })
+        .then(data => {
+            // Check if response says success
+            if (data.status === "success") {
+                usernameElement.value = "";
+                firstnameElement.value = "";
+                lastnameElement.value = "";
+
+                window.location.reload();
+            } else {
+                // If response is not successful then output error.
+                alert("Error: " + data.message);
+            }
+        })
+}
+
+The first thing it does it get the actual inputBox elements inside the member form. Since the ID was input(etc) it will
+easily find the right element since an ID can only be set to one element. Second it creates a dictionary which is the
+best format to send your data through JSON type requests.
+
+fetch('/api/createMember', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+    })
+
+Fetch is what allows to send the request to my flask API. Method would be post since we are sending data to my API.
+Headers allow for context for a request. the Context type: JSON tells my API that the request is in JSON. Then in the body
+is where we put the data. stringify turns my dictionary into a JSON friendly format.
+
+.then(response => {
+            // Get response from flask.
+            return response.json();
+        })
+
+This gets the response from our flask API. For example:
+
+return jsonify({"status": "error", "message": "All fields are required"})
+
+This returns the response to our JavaScript. status: error means that the request was unsuccessful.
+
+return jsonify({"status": "success", "message": f"Member with username: {newMember.username} has been created."})
+
+success means it will successfully. The message is the response itself.
+
+.then(data => {
+            .then(data => {
+            // Check if response says success
+            if (data.status === "success") {
+                usernameElement.value = "";
+                firstnameElement.value = "";
+                lastnameElement.value = "";
+
+                window.location.reload();
+            } else {
+                // If response is not successful then output error.
+                alert("Error: " + data.message);
+            }
+        })
+
+This part tells what to do with the response. It checks if the response was a success. If it was then it will set all
+elements values to an empty string. Removing any of the text from the input box. Then it wil reload the page to page any info.
+If the response was an error then it will alert() which will cause a window to pop up. data.message is the repose sent from
+our API. So it will display exactly what my API is saying what's wrong which informs the user what went wrong.
+
+That is basically the ins and outs of createMember system. There is a terminology called backend and frontend.
+The frontend is the html/javascript which sends request to our backend which is the python flask api that I have made.
+JavaScript does do any of the member creation. It just sends requests for a member to be created.

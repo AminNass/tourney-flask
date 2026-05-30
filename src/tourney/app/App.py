@@ -1,9 +1,11 @@
 from flask import Flask, render_template, jsonify, request
 import webview
 import threading
+from tkinter import messagebox
+import tkinter as tk
 
-from tourney.classes.Common import log as log
-from tourney.classes import Members as Members, Teams as Teams, Events as Events, Tourney as Tourney, Common as Common
+from tourney.classes.Common import log as log, saveAllData as saveAll
+from tourney.classes import Members as Members, Teams as Teams, Events as Events, Tourney as Tourney
 
 # Flask
 
@@ -15,6 +17,9 @@ class App:
         self.appMenus()
         self.appAPI()
         self.window = webview.create_window(self.name, self.app, width=800, height=600, resizable=False)
+        self.window.events.closing += self.onClosing
+        self.exitMenuOpened = False
+
 
         log(f"Created app: {name}, load page set to {loadhtml}.html", "SUCCESS")
 
@@ -46,11 +51,46 @@ class App:
             log(f"Getting ready to load page: members.html")
             self.changeTitle("Members")
 
-            #memberData = Members.Members.formatData()
-
             return render_template(
                 "members.html",
                 members=list(Members.Members.getMemberRegistry().values())
+            )
+
+        @self.app.route("/teams")
+        def teams():
+            log(f"Getting ready to load page: teams.html")
+            self.changeTitle("Teams")
+
+            teams = list(Teams.Teams.getTeamRegistry().values())
+            members = list(Members.Members.getMemberRegistry().values())
+
+            for team in teams:
+                # Declaring team member info object.
+                log(f"getting member data for team {team}")
+                teamMembers = team.members
+                team.membersInfo = []
+                team.memberCount = len(teamMembers)
+                for teamMember in teamMembers:
+                    # Appending team member info into each team.
+                    log(f"getting member data for team {team.name}, for member {teamMember}")
+                    memberInfo = Members.Members.getMember(id=teamMember).getMemberInfo()
+                    team.membersInfo.append(memberInfo)
+
+            return render_template(
+                "teams.html",
+                teams=teams
+            )
+
+        @self.app.route("/events")
+        def events():
+            log(f"Getting ready to load page: events.html")
+            self.changeTitle("events")
+
+            events = list(Events.Events.getTeamRegistry().values())
+
+            return render_template(
+                "events.html",
+                events=events
             )
 
         @self.app.route("/about")
@@ -128,10 +168,204 @@ class App:
 
             return jsonify({"status": "success", "message": f"Saved members successfully."})
 
+        @self.app.route("/api/getMemberByID", methods=["GET"])
+        def getUserByID():
+            data = request.get_json()
+            foundMember = Members.Members.getMember(id=data.get("memberID"))
+            return jsonify(foundMember.getMemberInfo())
+
+        @self.app.route(f"/api/createTeam", methods=["POST"])
+        def createTeam():
+            log("Received request to create a new team")
+
+            data = request.get_json()
+            name = data.get("name")
+
+            if not name:
+                log("Failed to create member: Missing Fields", "ERROR")
+                return jsonify({"status": "error", "message": "All fields are required"})
+
+            newTeam = Teams.Teams.createTeam(name)
+
+            if isinstance(newTeam, Teams.Teams):
+                return jsonify({"status": "success", "message": f"Member with username: {newTeam.name} has been created."})
+            else:
+                return jsonify({"status": "error", "message": f"{newTeam}"})
+
+        @self.app.route("/api/editTeam", methods=["POST"])
+        def editTeam():
+            log("Received request to edit a team")
+
+            data = request.get_json()
+
+            TeamObject = Teams.Teams.getTeam(id=data.get("teamID"))
+
+            newName = data.get("name")
+
+            editedMember = Teams.Teams.changeInformation(TeamObject, newName)
+
+            if isinstance(editedMember, Teams.Teams):
+                return jsonify({"status": "success", "message": f"Member with username: {editedMember.name} has been edited."})
+            else:
+                return jsonify({"status": "error", "message": f"{editedMember}"})
+
+        @self.app.route("/api/deleteTeam", methods=["POST"])
+        def deleteTeam():
+            log("Received request to delete a team")
+
+            data = request.get_json()
+
+            deletedMember = Teams.Teams.removeTeam(Teams.Teams.getTeam(id=data.get("teamID")))
+
+            if deletedMember:
+                return jsonify({"status": "success", "message": f"Team with name: {data.get("name")} has been deleted."})
+            else:
+                return jsonify({"status": "error", "message": f"Could not find name in registry."})
+
+        @self.app.route("/api/removeTeamMember", methods=["POST"])
+        def deleteTeamMember():
+            log("Received request to remove a team member")
+
+            data = request.get_json()
+
+            teamID = data.get("teamID")
+            memberID = data.get("memberID")
+
+            log(f"{teamID}, {memberID}")
+
+            teamObject = Teams.Teams.getTeam(id=teamID)
+
+            teamObject.removeMember(memberID)
+
+            return jsonify({"status": "success", "message": f"Removed member in team: {teamObject.name}."})
+
+        @self.app.route("/api/addTeamMember", methods=["POST"])
+        def addTeamMember():
+            log("Received request to add a team member")
+
+            data = request.get_json()
+
+            teamID = data.get("teamID")
+            username = data.get("username")
+
+            teamObject = Teams.Teams.getTeam(id=teamID)
+
+            memberObject = Members.Members.getMember(username=username)
+
+            if isinstance(memberObject, Members.Members):
+                result = teamObject.addMember(memberObject)
+                if result is True: return jsonify({"status": "success", "message": f"Added member ({memberObject.username}) in team: {teamObject.name}."})
+                else: return jsonify({"status": "error", "message": f"{result}"})
+            else: return jsonify({"status": "error", "message": f"{memberObject}"})
+
+        @self.app.route("/api/saveTeams", methods=["POST"])
+        def saveTeams():
+            log("Received request to save members.")
+
+            Teams.Teams.saveData()
+
+            return jsonify({"status": "success", "message": f"Saved teams successfully."})
+
+        @self.app.route(f"/api/createEvent", methods=["POST"])
+        def createEvent():
+            log("Received request to create a new event")
+
+            data = request.get_json()
+            name = data.get("name")
+
+            if not name:
+                log("Failed to create member: Missing Fields", "ERROR")
+                return jsonify({"status": "error", "message": "All fields are required"})
+
+            newEvent = Events.Events.createEvent(name)
+
+            if isinstance(newEvent, Events.Events):
+                return jsonify(
+                    {"status": "success", "message": f"Member with username: {newEvent.name} has been created."})
+            else:
+                return jsonify({"status": "error", "message": f"{newEvent}"})
+
+        @self.app.route("/api/editEvent", methods=["POST"])
+        def editEvent():
+            log("Received request to edit a event")
+
+            data = request.get_json()
+
+            EventObject = Events.Events.getEvent(id=data.get("eventID"))
+
+            newName = data.get("name")
+
+            editedMember = Events.Events.changeInformation(EventObject, newName)
+
+            if isinstance(editedMember, Events.Events):
+                return jsonify(
+                    {"status": "success", "message": f"Member with username: {editedMember.name} has been edited."})
+            else:
+                return jsonify({"status": "error", "message": f"{editedMember}"})
+
+        @self.app.route("/api/deleteEvent", methods=["POST"])
+        def deleteEvent():
+            log("Received request to delete a event")
+
+            data = request.get_json()
+
+            deletedMember = Events.Events.delEvent(Events.Events.getEvent(id=data.get("eventID")))
+
+            if deletedMember:
+                return jsonify({"status": "success", "message": f"Event with name: {data.get("name")} has been deleted."})
+            else:
+                return jsonify({"status": "error", "message": f"Could not find name in registry."})
+
+
+
+
+
+
+
+
+
+        @self.app.route("/api/saveEvents", methods=["POST"])
+        def saveEvents():
+            log("Received request to save events.")
+
+            Events.Events.saveData()
+
+            return jsonify({"status": "success", "message": f"Saved teams successfully."})
+
+
+
     def startWindow(self):
         log(f"Window started successfully", "SUCCESS")
         webview.start()
         log(f"Window closed successfully", "SUCCESS")
+
+    def onClosing(self):
+
+        if self.exitMenuOpened: return False
+
+        log(f"Attempting to close App.")
+
+        self.exitMenuOpened = True
+
+        root = tk.Tk()
+        root.withdraw()
+
+        prompt = messagebox.askyesnocancel("Saves Changes", "Do you want to save changes?")
+        root.destroy()
+
+        if prompt:
+            log("Exiting with saving changes.", "SUCCESS")
+            saveAll()
+            self.exitMenuOpened = False
+            return True
+        elif prompt == False:
+            log("Exiting without saving changes.", "SUCCESS")
+            self.exitMenuOpened = False
+            return True
+        else:
+            log("Exit canceled", "SUCCESS")
+            self.exitMenuOpened = False
+            return False
 
     def changeTitle(self, title):
 

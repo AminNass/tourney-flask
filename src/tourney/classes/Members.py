@@ -1,5 +1,5 @@
-from tourney.classes import Common as Common
-from tourney.classes.Common import saveDataDirectory as saveDir, log as log, removeWhitespace as remWs, isInCharLimit as limCheck, zeroChar as zChar, timeNow as now
+
+from tourney.classes.Common import uniqueIDGenerator, saveDataDirectory as saveDir, log as log, removeWhitespace as remWs, isInCharLimit as limCheck, zeroChar as zChar, timeNow as now
 from tourney import Main as Main
 import json
 
@@ -112,7 +112,7 @@ class Members:
             return f"All names must be below {lim} characters."
 
         # Generates a unqiue ID.
-        unqiueId = Common.uniqueIDGenerator(registry=cls.registry, prefix="USER")
+        unqiueId = uniqueIDGenerator(registry=cls.registry, prefix="USER")
 
         # Then it creates a new object of itself (cls) and puts in the arguments.
         # Added " ".join(text.split()) to remove white space and extra spaces.
@@ -127,12 +127,31 @@ class Members:
     # class method to remove a member.
     @classmethod
     def removeMember(cls, ob):
-        # It pops out the ID from the registry. The pop() function returns return when sucessfull.
+
+        def removeMemberFromTeams(memberID):
+            from tourney.classes import Teams as Teams
+
+            log("Attempting to remove member from teams.")
+
+            teams = list(Teams.Teams.getTeamRegistry().values())
+
+            for team in teams:
+                for teamMemberID in team.members:
+                    if teamMemberID == memberID:
+                        log(f"Found Member in team: {team.name}", "SUCCESS")
+                        team.members.remove(memberID)
+
+
+
+        # It pops out the ID from the registry. The pop() function returns return when successful.
         removedUser = cls.registry.pop(ob.id, None)
 
-        # Checks if it was sucessfully popped out. If False then username is not in the registry
+        # Checks if it was successfully popped out. If False then username is not in the registry
         if removedUser:
             log(f"Member: {ob.username} removed", "SUCCESS")
+
+            removeMemberFromTeams(ob.id)
+
             return True
         else:
             log(f"Member: {ob.username} not found", "ERROR")
@@ -192,18 +211,18 @@ class Members:
         elif not username == None:
             for ob in cls.registry.values():
             # Checking for every value (Which is an object) in the regisry is the same as the username arugement.
-                if ob.username == username:
+                if ob.username.lower() == username.lower():
                     # Returns when found the name.
                     log(f"User found: {username}", "SUCCESS")
                     return ob
         else:
             # Returns nothing when both arguments are None.
-            log(f"No arguements was entered", "ERROR")
-            return None
+            log(f"No arguments was entered", "ERROR")
+            return "No member arguments were entered."
             
         # Returns None when no Member is found in the registry with the ID or Username.
         log(f"No member was found using the Username:, {username} or the ID:, {id}", "ERROR")
-        return None
+        return f"No member with the username: {username} or the ID:, {id} was found."
 
     @classmethod
     def getMemberRegistry(cls):

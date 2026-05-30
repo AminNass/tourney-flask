@@ -4,8 +4,6 @@ import datetime
 import platform
 
 from pathlib import Path
-
-from tourney.classes import Members as Members
 import inspect
 
 
@@ -16,13 +14,16 @@ def uniqueIDGenerator(registry=None, prefix=None):
 
     if not f"{prefix}-{randomNum}" in registry: return f"{prefix}-{randomNum}"
 
-    uniqueIDGenerator(registry=registry, prefix=prefix)
+    return uniqueIDGenerator(registry=registry, prefix=prefix)
     # If there is no ids it will infinitely loop.
     # If there is little amount of ids it may take a long time to find one.
 
 def saveAllData():
+    from tourney.classes import Members, Teams, Events
     log("Saving all data...")
     Members.Members.saveData()
+    Teams.Teams.saveData()
+    Events.Events.saveData()
 
 def log(message, type="INFO"):
 

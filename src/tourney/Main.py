@@ -24,6 +24,10 @@ class Main:
 
         Members.Members.loadData()
 
+        Teams.Teams.loadData()
+
+        Events.Events.loadData()
+
         log(f"Dictionary check: {list(Members.Members.getMemberRegistry())}")
 
         log(Members.Members.getMember(username="JoeC").lastname)
@@ -32,9 +36,7 @@ class Main:
 
         Teams.Teams.getTeam(name="Team Falcons").addMember(Members.Members.getMember(username="MikeAhhh"))
 
-        RLCS = Tourney.Tourney.createTourney("RLCS")
-
-        RLCS.addEvent("RLCS Major", Events.Events.createEvent("Major"))
+        Teams.Teams.getTeam(name="Team Falcons").addMember(Members.Members.getMember(username="JoeC"))
 
         log(Members.Members.formatData())
 

@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+
+{% block title %}Home{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/teams.css') }}">
+
+<script src="{{ url_for('static', filename='js/teams.js') }}?v={{ range(1, 99999)|random }}"></script>
+{% endblock %}
+
+{% block content %}
+
+    <div style="background: dimgray; padding: 10px; margin-bottom: 25px; color: white;">
+        <h3>Register New Team</h3>
+
+        <div style="margin-bottom: 10px;">
+            <label>Name:</label><br>
+            <input type="text" id="inputName">
+        </div>
+
+        <button onclick="submitTeamForm()">Submit Registration</button>
+    </div>
+
+    <div id="editTeamForm">
+        <h3>Editing team:</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Names</th>
+                    <th>Members</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td id="tableEditTeamForm-ID"></td>
+                    <td id="tableEditTeamForm-Name"></td>
+                    <td id="tableEditTeamForm-Members"></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div style="margin-bottom: 10px;">
+            <label>Name:</label><br>
+            <input type="text" id="inputEditName">
+        </div>
+
+        <button onclick="submitEditTeamForm()">Submit Changes</button>
+        <button onclick="submitDeleteTeamForm()">Delete Team</button>
+
+        <p>Select a Member</p>
+
+        <select id="tableEditTeamForm-MemberList-Select"></select>
+
+        <button onclick="submitRemoveMemberForm()">Remove Member</button>
+
+        <p>Add new Member</p>
+
+        <div style="margin-bottom: 10px;">
+            <label>Member Username:</label><br>
+            <input type="text" id="inputAddMember">
+        </div>
+
+        <button onclick="submitAddMemberForm()">Add Member</button>
+    </div>
+
+    <hr>
+
+    <button onclick="saveTeams()">Save All Teams</button>
+
+    <div>
+        <h2>Registered Teams</h2>
+
+        <table style="width:100%">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Ranks</th>
+                    <th>Edit</th>
+                </tr>
+            </thead>
+            <tbody style="text-align: center;">
+                {% for team in teams %}
+                <tr>
+                    <td>{{ team.id }}</td>
+                    <td>{{ team.name }}</td>
+                    <td>
+                        Count: {{ team.memberCount }}
+                        <br>
+                        <select>
+                        {% for member in team.membersInfo %}
+                            <option>{{ member[1] }}</option>
+                        {% endfor %}
+                        </select>
+                    </td>
+                    <td><button onclick="editTeam('{{ team.id }}', '{{ team.name }}', {{ team.membersInfo }})">[]</button></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

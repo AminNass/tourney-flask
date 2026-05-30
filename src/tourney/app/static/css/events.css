@@ -1,0 +1,7 @@
+#editEventForm {
+    display: none;
+}
+
+#editEventForm.visible {
+    display: block;
+}
