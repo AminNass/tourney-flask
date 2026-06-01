@@ -211,41 +211,43 @@ class Events:
 
     def startEvent(self):
         if self.status == "Ready":
-            startDateTime = datetime.datetime.now()
+            startDateTime = datetime.datetime.now().replace(microsecond=0)
             log(f"{self.name} Event has started: {startDateTime}", "SUCCESS")
             self.startTime = startDateTime
             self.status = "Started"
-            return
+            return "success"
 
         log(f"{self.name} Event is not ready yet", "ERROR")
-        return
+        return "Event not ready yet"
     
     def endEvent(self):
         if self.status == "Started":
-            endDateTime = datetime.datetime.now()
+            endDateTime = datetime.datetime.now().replace(microsecond=0)
             log(f"{self.name} Event has ended: {endDateTime}", "SUCCESS")
             self.endTime = endDateTime
             self.status = "Ended"
-            return
+            return "success"
         
         log(f"{self.name} Event has not started.", "ERROR")
-        return
+        return "Event not started yet"
     
     def readyEvent(self):
         if self.status == "Ended" or self.status is None:
             self.points = {}
             self.status = "Ready"
+            self.startTime = None
+            self.endTime = None
             log(f"{self.name} Event is ready.", "SUCCESS")
-            return
+            return "success"
         elif self.status == "Started":
             log(f"{self.name} Event cannot be ready when it has already started.", "ERROR")
-            return
+            return "Event cannot be ready when it has already started."
         
         log(f"{self.name} Event is already ready.", "ERROR")
-        return
+        return "Event is already ready yet"
     
     def eventLength(self):
-        if self.status == "Started": return datetime.datetime.now() - self.startTime
+        if self.status == "Started": return datetime.datetime.now().replace(microsecond=0) - self.startTime
             
         if self.status == "Ended": return self.endTime - self.startTime
 
@@ -254,6 +256,8 @@ class Events:
         return None
 
     def rankSettings(self, ranks, points, allowMultipleRanks=None):
+
+        self.rankPoints.clear()
 
         for rank, point in zip(ranks, points):
             self.rankPoints[rank] = point
@@ -277,30 +281,42 @@ class Events:
             log(f"Team found: {team}", "SUCCESS")
         return
 
+    def isTeamInEvent(self, team):
+        return team.id in self.points.keys()
+
     def addRank(self, team, rank):
 
-        if team not in self.points:
-            log(f"Team: {team} is not in this event", "ERROR")
+        if team.id not in self.points:
+            log(f"Team: {team.name} is not in this event", "ERROR")
             return
         elif not self.allowMultipleRanks:
-            if self.rankPoints[team] > 0:
-                log(f"Team: {team} already gained a rank in this event", "ERROR")
+            if team.id in self.points.keys():
+                if self.points[team.id] > 0:
+                    log(f"Team: {team.name} already gained a rank in this event", "ERROR")
+                    return
 
-        points = self.rankPoints[rank] + self.points[team]
-        self.points[team] = points
+        points = self.rankPoints[rank] + self.points[team.id]
+        self.points[team.id] = points
         log(f"Rank gained: {rank} points gained: {points}", "SUCCESS")
         return
 
     def removeRank(self, team, rank):
 
-        if team not in self.points:
-            log(f"Team: {team} is not in this event", "ERROR")
+        if team.id not in self.points:
+            log(f"Team: {team.name} is not in this event", "ERROR")
             return
 
-        points = self.points[team] - self.rankPoints[rank]
-        self.points[team] = points
+        points = self.points[team.id] - self.rankPoints[rank]
+        self.points[team.id] = points
         log(f"Rank removed: {rank} points removed: {points}")
         return
 
-    #debug
+    def getAllTeamPoints(self):
+        return self.points
+
+    def getTeamPoints(self, team):
+
+        if team.id not in self.points.keys(): return 0
+
+        return self.points[team]
 

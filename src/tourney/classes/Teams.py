@@ -1,10 +1,10 @@
 import json
 
+from tourney.classes.Common import uniqueIDGenerator, saveDataDirectory as saveDir, log as log, \
+    removeWhitespace as remWs, isInCharLimit as limCheck, zeroChar as zChar, timeNow as now
 
-from tourney.classes.Common import uniqueIDGenerator, saveDataDirectory as saveDir, log as log, removeWhitespace as remWs, isInCharLimit as limCheck, zeroChar as zChar, timeNow as now
 
 class Teams:
-
     registry = {}
     saveDirectory = saveDir() / "Teams"
     nameCharLimit = 25
@@ -23,7 +23,8 @@ class Teams:
 
         cls.saveDirectory.mkdir(parents=True, exist_ok=True)
 
-        if autoSave: file = cls.saveDirectory / f"(autoSave) Teams-{now()}.json"
+        if autoSave:
+            file = cls.saveDirectory / f"(autoSave) Teams-{now()}.json"
         else:
             log("Attempting to save data for teams.", "INFO")
             file = cls.saveDirectory / "Teams.json"
@@ -32,10 +33,17 @@ class Teams:
 
         for team in cls.registry.values():
 
-            teamsData[team.id] = {
-                "name": team.name,
-                "members": team.members
-            }
+            # Conditionally save based on whether it is an individual team or standard team
+            if hasattr(team, 'members'):
+                teamsData[team.id] = {
+                    "name": team.name,
+                    "members": team.members
+                }
+            else:
+                teamsData[team.id] = {
+                    "name": team.name,
+                    "member": team.member
+                }
 
         with open(file, "w") as f:
             json.dump(teamsData, f, indent=4)
@@ -57,12 +65,20 @@ class Teams:
 
         for teamID, teamInfo in teamsData.items():
             try:
-
-                loadedTeam = cls(
-                    identifier=teamID,
-                    name=teamInfo["name"],
-                    members=teamInfo["members"]
-                )
+                # Check the dictionary keys to determine how to recreate the object
+                if "members" in teamInfo:
+                    loadedTeam = cls(
+                        identifier=teamID,
+                        name=teamInfo["name"],
+                        members=teamInfo["members"]
+                    )
+                else:
+                    loadedTeam = cls(
+                        identifier=teamID,
+                        name=teamInfo["name"]
+                    )
+                    del loadedTeam.members
+                    loadedTeam.member = teamInfo.get("member")
 
                 cls.registry[loadedTeam.id] = loadedTeam
                 log(f"Team '{loadedTeam.name}' loaded.", "SUCCESS")
@@ -73,7 +89,6 @@ class Teams:
 
             log(f"Successfully loaded {len(cls.registry)} / {len(cls.registry) + failLoads} teams.", "SUCCESS")
 
-
     #
     # Class Functions
     #
@@ -82,7 +97,7 @@ class Teams:
     def createTeam(cls, name, type=None):
 
         for ob in cls.registry.values():
-        # Checking for every value (Which is an object) in the registry is the same as the name argument.
+            # Checking for every value (Which is an object) in the registry is the same as the name argument.
             if ob.name.lower() == remWs(name.lower()):
                 log(f"The Team name: {name} already exists.", "ERROR")
                 return "Name already exists."
@@ -147,7 +162,13 @@ class Teams:
                 return "Username already exists."
 
         # Create a new object of itself:
-        newTeam = cls(identifier=ob.id, name=name, members=ob.members)
+        # Check if it has 'members' to handle individual teams correctly
+        if hasattr(ob, 'members'):
+            newTeam = cls(identifier=ob.id, name=name, members=ob.members)
+        else:
+            newTeam = cls(identifier=ob.id, name=name)
+            del newTeam.members
+            newTeam.member = ob.member
 
         # Updates the registry, using the id.
         cls.registry[ob.id] = newTeam
@@ -171,7 +192,7 @@ class Teams:
         # Runs when id is none and name is something other than None.
         elif not name == None:
             for ob in cls.registry.values():
-            # Checking for every value (Which is a object) in the regisry is the same as the name arugement.
+                # Checking for every value (Which is a object) in the regisry is the same as the name arugement.
                 if ob.name == name:
                     # Returns when found the name.
                     return ob
@@ -180,11 +201,10 @@ class Teams:
             # Returns nothing when both arugments are None.
             log(f"No arguements was entered", "ERROR")
             return "No arugments was entered."
-            
+
         # Returns None when no team is found in the registry with the ID or Username.
         log(f"No team was found with the name: {name} or the ID: {id}", "ERROR")
         return None
-
 
     @classmethod
     def getTeamRegistry(cls):
@@ -204,7 +224,7 @@ class Teams:
                 if i == j.id:
                     log(f"{j.username}, is already a member of {self.name}", "ERROR")
                     return "This member is already a member of this team."
-        
+
         for i in args:
             self.members.append(i.id)
         log(f"Member(s) has been added.", "SUCCESS")
@@ -213,7 +233,7 @@ class Teams:
     # This function expects ids.
     # I made it like java for loop.
     def removeMember(self, *args):
-        
+
         for i in args:
             for j in range(len(self.members)):
                 log(f"{j}, {i}: {len(self.members)}.", "ERROR")

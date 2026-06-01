@@ -47,6 +47,20 @@
             <input type="text" id="inputEditName">
         </div>
 
+        <div style="margin-bottom: 15px;">
+            <label><strong>Rank Points Configuration:</strong></label>
+            <div id="rankPointsInputContainer" style="margin-top: 5px; margin-bottom: 5px;">
+                </div>
+            <button type="button" onclick="addRankPointRow('', '')">
+                + Add Rank Row
+            </button>
+        </div>
+
+        <label>Allow Multiple Ranks</label>
+        <input type="checkbox" id="inputEditAllowMultipleRanks">
+
+        <p>This feature allows for multiple ranks to be added to a team.<br>Allowing for teams to gain more points.</p>
+
         <button onclick="submitEditEventForm()">Submit Changes</button>
         <button onclick="submitDeleteEventForm()">Delete Team</button>
     </div>
@@ -81,7 +95,7 @@
                         </select>
                     </td>
                     <td>{{ event.allowMultipleRanks }}</td>
-                    <td><button onclick="editEvent('{{ event.id }}', '{{ event.name }}', '{{ (event.rankPoints.keys() | list) | tojson | forceescape }}', '{{ event.allowMultipleRanks }}')">[]</button></td>
+                    <td><button onclick="editEvent('{{ event.id }}', '{{ event.name }}', '{{ event.rankPoints | tojson | forceescape }}', '{{ event.allowMultipleRanks }}')">[]</button></td>
                 </tr>
                 {% endfor %}
             </tbody>

@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block title %}Home{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/tourney.css') }}">
+
+<script src="{{ url_for('static', filename='js/tourney.js') }}?v={{ range(1, 99999)|random }}"></script>
+{% endblock %}
+
+{% block content %}
+
+    <div style="background: dimgray; padding: 10px; margin-bottom: 25px; color: white;">
+        <h3>Register New Team</h3>
+
+        <div style="margin-bottom: 10px;">
+            <label>Name:</label><br>
+            <input type="text" id="inputName">
+        </div>
+
+        <button onclick="submitTourneyForm()">Submit Registration</button>
+    </div>
+
+    <hr>
+
+    <button onclick="saveTourneys()">Save All Teams</button>
+
+    <div>
+        <h2>Registered Tourneys</h2>
+
+        <table style="width:100%">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Events</th>
+                    <th>Open</th>
+                </tr>
+            </thead>
+            <tbody style="text-align: center;">
+                {% for tourney in tourneys %}
+                <tr>
+                    <td>{{ tourney.id }}</td>
+                    <td>{{ tourney.name }}</td>
+                    <td>
+                        Count: {{ tourney.eventCount }}
+                        <select>
+                        {% for event in tourney.events.values() %}
+                            <option>{{ event.name }} - {{ event.status }}</option>
+                        {% endfor %}
+                        </select>
+                    </td>
+                    <td><button onclick="openTourney('{{ tourney.id }}')">[]</button></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

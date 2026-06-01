@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Tourney Manager</title>
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/tourney.css') }}">
+  <script src="{{ url_for('static', filename='js/tourney.js') }}?v={{ range(1, 99999)|random }}"></script>
+</head>
+<body>
+  <div style="width: 100%;">
+    <h1>Tourney Manager</h1>
+    <p>You are currently editing:<br>{{ tourney.name }}</p>
+
+    <h3>Leaderboard Table</h3>
+
+    <table style="width:100%; margin-top: 15px; background-color: white;">
+      <thead>
+        <tr style="background-color: whitesmoke; text-align: left;">
+          <th style="padding: 10px;">Team ID</th>
+          <th style="padding: 10px; text-align: center;">Total Points Gained</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% if tourney.overallPoints %}
+        {% for teamID, totalPoints in tourney.overallPoints.items() %}
+          <tr>
+            <td style="padding: 10px;">{{ teamID }}</td>
+              <td style="padding: 10px; text-align: center;">
+                {{ totalPoints }}
+              </td>
+          </tr>
+        {% endfor %}
+      {% else %}
+        <tr>
+          <td colspan="2" style="padding: 15px; text-align: center;">
+            No team scores calculated yet. Make sure events are added to the events in this tourney.
+          </td>
+        </tr>
+      {% endif %}
+      </tbody>
+    </table>
+
+    {% for eventID, event in tourney.events.items() %}
+      <table id="editEventForm-{{ eventID }}" style="width:100%; margin-top: 15px; background-color: white;">
+        <thead>
+          <tr>
+            <th>Event ID</th>
+            <th>Name</th>
+            <th>Multi Rank</th>
+            <th>Status</th>
+            <th>Start Time</th>
+            <th>End Time</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>{{ eventID }}</td>
+            <td>{{ event.name }}</td>
+            <td>{{ event.allowMultipleRanks }}</td>
+            <td>{{ event.status }}</td>
+            <td>{{ event.startTime }}</td>
+            <td>{{ event.endTime }}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p>Event Length</p>
+      <div id="timeBox-{{ eventID }}"></div>
+      <br>
+      <button onclick="getEventLength('{{ tourney.id }}', '{{ eventID }}')">Refresh</button>
+      <br>
+      <br>
+
+      <div>
+        Edit {{ event.name }} here:
+
+        <div style="margin-bottom: 10px;">
+            <label>Name:</label><br>
+            <input type="text" id="inputName-{{ eventID }}">
+        </div>
+        <button onclick="submitEventChanges('{{ tourney.id }}', '{{ eventID }}')">Submit Changes</button>
+      </div>
+
+      <br>
+
+      <div>
+        {% if event.status == "Ready" %}
+          <button onclick="updateStatus('{{ tourney.id }}', '{{ eventID }}', 'Start')">Start Event</button>
+        {% elif event.status == "Started" %}
+          <button onclick="updateStatus('{{ tourney.id }}', '{{ eventID }}', 'End')">End Event</button>
+        {% else %}
+          <button onclick="updateStatus('{{ tourney.id }}', '{{ eventID }}', 'Ready')">Ready Event</button>
+        {% endif %}
+      </div>
+
+    {% endfor %}
+
+  </div>
+
+  <br>
+
+  <div style="width: 100%; background-color: lightgray;">
+    <button onclick="cancelChanges()">Cancel Changes</button>
+    <button onclick="deleteTourney()">Delete Tourney</button>
+  </div>
+</body>
+</html>

@@ -40,6 +40,9 @@ class Main:
 
         log(Members.Members.formatData())
 
+        Tourney.Tourney.createTourney("RLCS")
+        Tourney.Tourney.getTourney(name="RLCS").addEvent("Major 2nd", Events.Events.createEvent("RLCS Major 2nd"))
+
         self.appModule.startWindow()
 
 

@@ -84,7 +84,7 @@ class App:
         @self.app.route("/events")
         def events():
             log(f"Getting ready to load page: events.html")
-            self.changeTitle("events")
+            self.changeTitle("Events")
 
             events = list(Events.Events.getTeamRegistry().values())
 
@@ -92,6 +92,37 @@ class App:
                 "events.html",
                 events=events
             )
+
+        @self.app.route("/tourneys")
+        def tourneys():
+            log(f"Getting ready to load page: tourney.html")
+            self.changeTitle("Tourney")
+
+            tourneys = list(Tourney.Tourney.getTourneyRegistry().values())
+
+            for tourney in tourneys:
+                tourney.eventCount = len(tourney.events)
+
+            return render_template(
+                "tourney.html",
+                tourneys=tourneys
+            )
+
+        @self.app.route("/tourney/manager/<tourneyid>")
+        def tourneyManager(tourneyid):
+
+            tourney = Tourney.Tourney.getTourney(id=tourneyid)
+
+            if not isinstance(tourney, Tourney.Tourney):
+                return tourneys()
+
+            tourney.overallPoints = tourney.getAllTeamPoints()
+
+            return render_template(
+                "tourneyManager.html",
+                tourney=tourney
+            )
+
 
         @self.app.route("/about")
         def about():
@@ -287,21 +318,31 @@ class App:
 
         @self.app.route("/api/editEvent", methods=["POST"])
         def editEvent():
+            from tourney.classes.Common import zeroChar as zChar
+
             log("Received request to edit a event")
 
             data = request.get_json()
 
             EventObject = Events.Events.getEvent(id=data.get("eventID"))
 
-            newName = data.get("name")
+            newRankPoints = data.get("rankPoints")
 
-            editedMember = Events.Events.changeInformation(EventObject, newName)
+            newName = zChar(data.get("name"))
 
-            if isinstance(editedMember, Events.Events):
-                return jsonify(
-                    {"status": "success", "message": f"Member with username: {editedMember.name} has been edited."})
-            else:
-                return jsonify({"status": "error", "message": f"{editedMember}"})
+            EventObject.rankSettings(newRankPoints.keys(), newRankPoints.values(), data.get("allowMultipleRanks"))
+
+            if not newName is None:
+                editedMember = Events.Events.changeInformation(EventObject, newName)
+
+                if isinstance(editedMember, Events.Events):
+
+                    return jsonify({"status": "success", "message": f"Member with username: {editedMember.name} has been edited."})
+                else:
+                    return jsonify({"status": "error", "message": f"{editedMember}"})
+
+            return jsonify({"status": "success", "message": f"Member with name: {EventObject.name} rankSettings has been edited."})
+
 
         @self.app.route("/api/deleteEvent", methods=["POST"])
         def deleteEvent():
@@ -316,14 +357,6 @@ class App:
             else:
                 return jsonify({"status": "error", "message": f"Could not find name in registry."})
 
-
-
-
-
-
-
-
-
         @self.app.route("/api/saveEvents", methods=["POST"])
         def saveEvents():
             log("Received request to save events.")
@@ -331,6 +364,67 @@ class App:
             Events.Events.saveData()
 
             return jsonify({"status": "success", "message": f"Saved teams successfully."})
+
+        @self.app.route("/api/changeTourneyEvent", methods=["POST"])
+        def changeTourneyEvent():
+            log("Received request to change tourney event information/")
+
+            data = request.get_json()
+
+            tourneyID = data.get("tourneyID")
+            eventID = data.get("eventID")
+            newName = data.get("eventName")
+
+            log(f"{tourneyID}, {eventID}, {newName}")
+
+            tourney = Tourney.Tourney.getTourney(id=tourneyID)
+
+            tourneyEvent = tourney.getEvent(id=eventID)
+
+            result = tourney.changeEvent(newName, tourneyEvent)
+
+            if isinstance(result, Events.Events):
+                return jsonify({"status": "success", "message": f"Event with name: {data.get("name")} has been deleted."})
+
+            return jsonify({"status": "error", "message": f"{result}"})
+
+        @self.app.route("/api/changeTourneyEventStatus", methods=["POST"])
+        def changeTourneyEventStatus():
+            log("Received request to change tourney event status")
+
+            data = request.get_json()
+            tourneyID = data.get("tourneyID")
+            eventID = data.get("eventID")
+            status = data.get("status")
+
+            tourney = Tourney.Tourney.getTourney(id=tourneyID)
+            tourneyEvent = tourney.getEvent(id=eventID)
+
+            result = None
+
+            if status == "Start": result = tourneyEvent.startEvent()
+            elif status == "End":result = tourneyEvent.endEvent()
+            elif status == "Ready":result = tourneyEvent.readyEvent()
+            if result == "success":
+                log(f"Successfully changed tourney event to {status}", "SUCCESS")
+                return jsonify({"status": "success", "message": f"Status has successfully changed to {status}"})
+
+            return jsonify({"status": "error", "message": f"{result}"})
+
+        @self.app.route("/api/getTourneyEventLength", methods=["GET"])
+        def getTourneyEventLength():
+            log("Received request to get tourney event length")
+
+            tourneyID = request.args.get("tourneyID")
+            eventID = request.args.get("eventID")
+
+            tourney = Tourney.Tourney.getTourney(id=tourneyID)
+            tourneyEvent = tourney.getEvent(id=eventID)
+
+            result = str(tourneyEvent.eventLength())
+
+            return jsonify({"status": "success", "message": f"{result}"})
+
 
 
 

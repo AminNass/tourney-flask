@@ -1,4 +1,4 @@
-from tourney.classes.Common import uniqueIDGenerator, log as log, removeWhitespace as remWs, isInCharLimit as limCheck
+from tourney.classes.Common import uniqueIDGenerator, log as log, removeWhitespace as remWs, isInCharLimit as limCheck, zeroChar as zChar
 import copy
 
 class Tourney:
@@ -6,12 +6,14 @@ class Tourney:
     registry = {}
     nameCharLimit = 100
 
-    def __init__(self, identifier=None, name=None):
+    def __init__(self, identifier=None, name=None, events=None):
         self.id = identifier
 
         self.name = name
 
-        self.events = {}
+        self.events = events
+
+        if events is None: self.events = {}
 
     @classmethod
     def createTourney(cls, name):
@@ -72,6 +74,10 @@ class Tourney:
         log(f"No tourney was found with the name: {name} or the ID: {id}", "ERROR")
         return None
 
+    @classmethod
+    def getTourneyRegistry(cls):
+        return cls.registry
+
     #
     # Object Functions
     #
@@ -80,7 +86,7 @@ class Tourney:
         
         # Checks if this event name already exists in this tournament.
         for event in self.events.values():
-            if event.name == name:
+            if event.name.lower() == name.lower():
                 log(f"The Event: {name} already exists in this tournament.", "ERROR")
                 return None
 
@@ -117,11 +123,11 @@ class Tourney:
         # Runs when there is something other than None in the ID argument.
         if not id == None:
             # Loops through every value in the event registry.
-            for ido in self.events.values():
+            for ido in self.events.keys():
                 # Compares the id found in the object with the ID argument.
-                if ido.id == id:
+                if ido == id:
                     # Return the value in the registry (Which is the object).
-                    return ido
+                    return self.events[ido]
         # Runs when id is none and name is something other than None.
         elif not name == None:
             for ob in self.events.values():
@@ -137,6 +143,52 @@ class Tourney:
         # Returns None when no event is found in the registry with the ID or Username.
         log(f"No event was found with the name: {name} or the ID: {id} in this tournament.", "ERROR")
         return None
+
+    def changeEvent(self, name, ob):
+        from tourney.classes import Events as Events
+
+        lim = Events.Events.nameCharLimit
+
+        newName = remWs(name)
+
+        if zChar(newName) is None:
+            return ob
+
+        for event in self.events.keys():
+            if event.lower() == newName.lower():
+                log(f"The Event: {newName} already exists in this tournament.", "ERROR")
+                return f"{newName} already exists"
+
+        if not limCheck(newName, lim):
+            log(f"{newName} is above {lim} characters.", "ERROR")
+            return f"{newName} is above {lim} characters."
+
+        ob.name = newName
+
+        return ob
+
+    def getAllTeamPoints(self):
+        from collections import Counter
+
+        totalPoints = {}
+
+        for event in self.events.values():
+            totalPoints = dict(Counter(totalPoints) + Counter(event.getAllTeamPoints()))
+
+        log(totalPoints, "SUCCESS")
+        return totalPoints
+
+    def getTeamPoints(self, team):
+
+        totalPoints = 0
+
+        for event in self.events.values():
+            if not event.isTeamInEvent(team=team): continue
+
+            totalPoints = totalPoints + event.getTeamPoints(team=team)
+
+        log(totalPoints, "SUCCESS")
+        return totalPoints
 
     def checkEventDeletion(self):
         from tourney.classes import Events as Events
