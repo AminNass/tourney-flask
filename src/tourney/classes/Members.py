@@ -1,6 +1,5 @@
 
 from tourney.classes.Common import uniqueIDGenerator, saveDataDirectory as saveDir, log as log, removeWhitespace as remWs, isInCharLimit as limCheck, zeroChar as zChar, timeNow as now
-from tourney import Main as Main
 import json
 
 class Members:
@@ -10,6 +9,14 @@ class Members:
     saveDirectory = saveDir() / "Members"
 
     def __init__(self, identifier=None, username=None, firstname=None, lastname=None):
+        """
+        Init class for members. It allows for creating an instance of members class
+        It shouldn't be used for creating members as it wouldn't be saved to the registry.
+        :param identifier:
+        :param username:
+        :param firstname:
+        :param lastname:
+        """
         self.username = username
         self.firstname = firstname
         self.lastname = lastname
@@ -24,6 +31,10 @@ class Members:
 
     @classmethod
     def saveData(cls, autoSave=False):
+        """
+        This function saves data to the machines local user directory.
+        :param autoSave:
+        """
         # Check if directory exists
         cls.saveDirectory.mkdir(parents=True, exist_ok=True)
 
@@ -54,7 +65,10 @@ class Members:
 
     @classmethod
     def loadData(cls):
-
+        """
+        This function loads all member data into the registry.
+        :return:
+        """
         file = cls.saveDirectory / "members.json"
 
         # Check if file exists
@@ -98,6 +112,15 @@ class Members:
     # Class method that creates a member.
     @classmethod
     def createMember(cls, username, firstname, lastname):
+        """
+        This function creates a member. This is then saved in the registry.
+        This function will always return the new member object with creation is successful.
+        If not successful, it will return an error message as a string.
+        :param username:
+        :param firstname:
+        :param lastname:
+        :return:
+        """
 
         for ob in cls.registry.values():
         # Checking for every value (Which is an object) in the registry is the same as the username argument.
@@ -127,7 +150,13 @@ class Members:
     # class method to remove a member.
     @classmethod
     def removeMember(cls, ob):
-
+        """
+        This function removes a member from the registry.
+        When successful it will return True, if not successful then it will return an error message as a string.\n
+        * This function handles removal of members from teams.
+        :param ob:
+        :return:
+        """
         def removeMemberFromTeams(memberID):
             from tourney.classes import Teams as Teams
 
@@ -155,7 +184,7 @@ class Members:
             return True
         else:
             log(f"Member: {ob.username} not found", "ERROR")
-            return False
+            return "Member not found"
 
     # class method to change member information
     @classmethod
