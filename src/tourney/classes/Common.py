@@ -6,7 +6,6 @@ import platform
 from pathlib import Path
 import inspect
 
-
 def uniqueIDGenerator(registry=None, prefix=None):
 
     randomNum = random.randint(0, 1000)
@@ -19,11 +18,12 @@ def uniqueIDGenerator(registry=None, prefix=None):
     # If there is little amount of ids it may take a long time to find one.
 
 def saveAllData():
-    from tourney.classes import Members, Teams, Events
+    from tourney.classes import Members, Teams, Events, Tourney
     log("Saving all data...")
     Members.Members.saveData()
     Teams.Teams.saveData()
     Events.Events.saveData()
+    Tourney.Tourney.saveData()
 
 def log(message, type="INFO"):
 

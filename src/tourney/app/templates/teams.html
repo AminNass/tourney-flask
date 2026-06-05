@@ -18,6 +18,9 @@
             <input type="text" id="inputName">
         </div>
 
+        <label>Do you want to create an Individual Team:</label><br>
+        <input type="checkbox" id="ITeamChecked">
+
         <button onclick="submitTeamForm()">Submit Registration</button>
     </div>
 
@@ -61,6 +64,8 @@
             <input type="text" id="inputAddMember">
         </div>
 
+        <p>Adding a new member for Individual Team (I.TEAM) will replace the original.</p>
+
         <button onclick="submitAddMemberForm()">Add Member</button>
     </div>
 
@@ -85,6 +90,16 @@
                 <tr>
                     <td>{{ team.id }}</td>
                     <td>{{ team.name }}</td>
+                    {% if team.type == "I" %}
+                    <td>
+                        Count: {{ team.memberCount }}
+                        <br>
+                        <select>
+                            <option>{{ team.memberInfo[0][1] }}</option>
+                        </select>
+                    </td>
+                    <td><button onclick="editTeam('{{ team.id }}', '{{ team.name }}', {{ team.memberInfo }})">[]</button></td>
+                    {% else %}
                     <td>
                         Count: {{ team.memberCount }}
                         <br>
@@ -95,6 +110,7 @@
                         </select>
                     </td>
                     <td><button onclick="editTeam('{{ team.id }}', '{{ team.name }}', {{ team.membersInfo }})">[]</button></td>
+                    {% endif %}
                 </tr>
                 {% endfor %}
             </tbody>

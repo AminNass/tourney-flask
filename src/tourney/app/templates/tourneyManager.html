@@ -12,12 +12,15 @@
     <h1>Tourney Manager</h1>
     <p>You are currently editing:<br>{{ tourney.name }}</p>
 
+    <hr>
+
     <h3>Leaderboard Table</h3>
 
     <table style="width:100%; margin-top: 15px; background-color: white;">
       <thead>
         <tr style="background-color: whitesmoke; text-align: left;">
           <th style="padding: 10px;">Team ID</th>
+          <th style="padding: 10px;">Team Name</th>
           <th style="padding: 10px; text-align: center;">Total Points Gained</th>
         </tr>
       </thead>
@@ -26,9 +29,10 @@
         {% for teamID, totalPoints in tourney.overallPoints.items() %}
           <tr>
             <td style="padding: 10px;">{{ teamID }}</td>
-              <td style="padding: 10px; text-align: center;">
-                {{ totalPoints }}
-              </td>
+            <td style="padding: 10px;">{{ teamsRegistry[teamID].name }}</td>
+            <td style="padding: 10px; text-align: center;">
+              {{ totalPoints }}
+            </td>
           </tr>
         {% endfor %}
       {% else %}
@@ -41,7 +45,27 @@
       </tbody>
     </table>
 
+    <h3>Add event to tourney</h3>
+
+    <div style="margin-bottom: 10px;">
+            <label>Event Name:</label><br>
+            <input type="text" id="inputAddEvent">
+    </div>
+    <div style="margin-bottom: 10px;">
+            <label>Event Name:</label><br>
+            <input type="text" id="inputAddEventNewName">
+    </div>
+    <p>Please enter the new name for the event<br>(You can enter the same if there are not any other events in this tourney with the same name.)</p>
+    <button onclick="addEventToTourney('{{ tourney.id }}')">Submit Changes</button>
+
+    <h2>Tourney Event List</h2>
+
     {% for eventID, event in tourney.events.items() %}
+
+      <hr>
+      <h1 style="font-weight: bolder">({{ eventID }}) {{ event.name }}:</h1>
+      <hr>
+
       <table id="editEventForm-{{ eventID }}" style="width:100%; margin-top: 15px; background-color: white;">
         <thead>
           <tr>
@@ -91,8 +115,70 @@
           <button onclick="updateStatus('{{ tourney.id }}', '{{ eventID }}', 'End')">End Event</button>
         {% else %}
           <button onclick="updateStatus('{{ tourney.id }}', '{{ eventID }}', 'Ready')">Ready Event</button>
+          <p>Readying up an event WILL DELETE ALL previous team data.</p>
         {% endif %}
       </div>
+
+      <h2>Teams List</h2>
+
+      <table style="width:100%; margin-top: 15px; background-color: white;">
+        <thead>
+          <tr>
+            <th>Team ID</th>
+            <th>Name</th>
+            <th>Points</th>
+            <th>RESET</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for teamID, team in event.teamInfo.items() %}
+            <tr>
+              <td>{{ team[0] }}</td>
+              <td>{{ team[1] }}</td>
+              <td>{{ team[2] }}</td>
+              <td><button onclick="resetTeamPoints('{{ tourney.id }}','{{ eventID }}','{{ teamID }}')">!!</button></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <p>Add Team to Event</p>
+
+      <label>Team Name:</label><br>
+      <input id="inputTeam-{{ eventID }}" type="text">
+      <br><br>
+      <button onclick="submitAddTeam('{{ tourney.id }}', '{{ eventID }}')">Add Team</button>
+
+      <p>Remove team from Event</p>
+
+      <label>Team Name:</label><br>
+      <select id="reamRemoveSelection-{{ eventID }}">
+      {% for teamID, team in event.teamInfo.items() %}
+        <option value="{{ teamID }}">{{ team[1] }}</option>
+      {% endfor %}
+      </select>
+      <br><br>
+      <button onclick="submitRemoveTeam('{{ tourney.id }}', '{{ eventID }}')">Remove Team</button>
+
+      <br><br>
+
+      {% if event.status == "Started" %}
+        <h3>Add rank to team.</h3>
+        <select id="teamAddRank-{{ eventID }}">
+        {% for teamID, team in event.teamInfo.items() %}
+          <option value="{{ teamID }}">{{ team[1] }}</option>
+        {% endfor %}
+        </select>
+        <br>
+        <select id="rankAddRank-{{ eventID }}">
+        {% for rank, points in event.rankPoints.items() %}
+          <option value="{{ rank }}">{{ rank }} = {{ points }}</option>
+        {% endfor %}
+        </select>
+        <br>
+        <button onclick="addRankToTeam('{{ tourney.id }}', '{{ eventID }}')">Add Rank</button>
+    {% endif %}
+
 
     {% endfor %}
 
@@ -101,8 +187,8 @@
   <br>
 
   <div style="width: 100%; background-color: lightgray;">
-    <button onclick="cancelChanges()">Cancel Changes</button>
-    <button onclick="deleteTourney()">Delete Tourney</button>
+    <button onclick="Close()">Close</button>
+    <button onclick="deleteTourney('{{ tourney.id }}')">Delete Tourney</button>
   </div>
 </body>
 </html>

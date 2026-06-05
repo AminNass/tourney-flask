@@ -218,49 +218,62 @@ class Teams:
         # *ARGS: This is a list of Members, the code works find if you just put one.
 
         # Loops for every member in this team
-        for i in self.members:
-            # Loops through every Member ID
-            for j in args:
-                if i == j.id:
-                    log(f"{j.username}, is already a member of {self.name}", "ERROR")
-                    return "This member is already a member of this team."
+        if hasattr(self, 'members'):
+            for i in self.members:
+                # Loops through every Member ID
+                for j in args:
+                    if i == j.id:
+                        log(f"{j.username}, is already a member of {self.name}", "ERROR")
+                        return "This member is already a member of this team."
 
-        for i in args:
-            self.members.append(i.id)
-        log(f"Member(s) has been added.", "SUCCESS")
+            for i in args:
+                self.members.append(i.id)
+            log(f"Member(s) has been added.", "SUCCESS")
+        else:
+            self.member = args[0].id
+            log(f"Member has been added.", "SUCCESS")
         return True
 
     # This function expects ids.
     # I made it like java for loop.
     def removeMember(self, *args):
 
-        for i in args:
-            for j in range(len(self.members)):
-                log(f"{j}, {i}: {len(self.members)}.", "ERROR")
-                if i == self.members[j]:
-                    self.members.pop(j)
-                    log(f"REMOVED: {i} {j}: {len(self.members)}", "SUCCESS")
-                    break
-                log(f"{i} cannot be found in members: Skipping", "ERROR")
-        log(f"Member(s) has been removed.", "SUCCESS")
+        if hasattr(self, 'members'):
+            for i in args:
+                for j in range(len(self.members)):
+                    log(f"{j}, {i}: {len(self.members)}.", "ERROR")
+                    if i == self.members[j]:
+                        self.members.pop(j)
+                        log(f"REMOVED: {i} {j}: {len(self.members)}", "SUCCESS")
+                        break
+                    log(f"{i} cannot be found in members: Skipping", "ERROR")
+            log(f"Member(s) has been removed.", "SUCCESS")
+        else:
+            self.member = None
+            log(f"Member has been removed.", "SUCCESS")
+
         return
 
     def getMembers(self):
         from tourney.classes import Members as Members
 
         foundMembers = []
-        # Get Member registry
-        memberRegistry = Members.Members.getMemberRegistry()
 
-        # Loop through every member inside of this team.
-        for mId in self.members:
-            # Check if the Ids in member registry.
-            if mId in memberRegistry:
-                # When found Id, get the value using the mId.
-                memberObject = memberRegistry[mId]
-                foundMembers.append(memberObject)
-            else:
-                log(f"Id not found in Member registry: {mId} not found.")
+        if hasattr(self, 'members'):
+
+            # Get Member registry
+            memberRegistry = Members.Members.getMemberRegistry()
+
+            # Loop through every member inside of this team.
+            for mId in self.members:
+                # Check if the Ids in member registry.
+                if mId in memberRegistry:
+                    # When found Id, get the value using the mId.
+                    memberObject = memberRegistry[mId]
+                    foundMembers.append(memberObject)
+                else:
+                    log(f"Id not found in Member registry: {mId} not found.")
+        else: foundMembers = self.member
 
         # Returns a list of Member objects.
         return foundMembers

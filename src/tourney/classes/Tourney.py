@@ -1,10 +1,13 @@
-from tourney.classes.Common import uniqueIDGenerator, log as log, removeWhitespace as remWs, isInCharLimit as limCheck, zeroChar as zChar
+import json
+
+from tourney.classes.Common import uniqueIDGenerator, log as log, removeWhitespace as remWs, isInCharLimit as limCheck, zeroChar as zChar, saveDataDirectory as saveDir, timeNow as now
 import copy
 
 class Tourney:
 
     registry = {}
     nameCharLimit = 100
+    saveDirectory = saveDir() / "Tourneys"
 
     def __init__(self, identifier=None, name=None, events=None):
         self.id = identifier
@@ -15,19 +18,122 @@ class Tourney:
 
         if events is None: self.events = {}
 
+    # Save and load data
+
+    @classmethod
+    def saveData(cls, autoSave=False):
+
+        cls.saveDirectory.mkdir(parents=True, exist_ok=True)
+
+        if autoSave:
+            file = cls.saveDirectory / f"(autoSave) Tourneys-{now()}.json"
+        else:
+            log("Attempting to save data for tourneys.", "INFO")
+            file = cls.saveDirectory / "Tourneys.json"
+
+        tourneysData = {}
+
+        for tourney in cls.registry.values():
+
+            eventDict = {}
+            # Loop through the event objects inside this tournament and extract their data
+            for eventID, event in tourney.events.items():
+                startTimeStr = event.startTime.isoformat() if event.startTime else None
+                endTimeStr = event.endTime.isoformat() if event.endTime else None
+
+                eventDict[eventID] = {
+                    "name": event.name,
+                    "points": event.points,
+                    "rankPoints": event.rankPoints,
+                    "allowMultipleRanks": event.allowMultipleRanks,
+                    "status": event.status,
+                    "startTime": startTimeStr,
+                    "endTime": endTimeStr,
+                }
+
+            tourneysData[tourney.id] = {
+                "name": tourney.name,
+                "events": eventDict
+            }
+
+        with open(file, "w") as f:
+            json.dump(tourneysData, f, indent=4)
+
+        log(f"File at {file} has been saved", "SUCCESS")
+
+    @classmethod
+    def loadData(cls):
+        from tourney.classes import Events as Events
+        from datetime import datetime
+
+        file = cls.saveDirectory / "Tourneys.json"
+
+        if not file.exists():
+            log("No Tourneys data found.", "INFO")
+            return
+
+        with open(file, "r") as f:
+            tourneysData = json.load(f)
+
+        failLoads = 0
+
+        for tourneyID, tourneyInfo in tourneysData.items():
+            try:
+                loadedTourney = cls(
+                    identifier=tourneyID,
+                    name=tourneyInfo["name"]
+                )
+
+                # Reconstruct the events dictionary full of Event objects
+                loadedEvents = {}
+                for eventID, eventInfo in tourneyInfo.get("events", {}).items():
+                    startTime = None
+                    endTime = None
+
+                    if eventInfo["startTime"]: startTime = datetime.fromisoformat(eventInfo["startTime"])
+                    if eventInfo["endTime"]: endTime = datetime.fromisoformat(eventInfo["endTime"])
+
+                    # Recreate the event object using the Events class
+                    loadedEvent = Events.Events(
+                        identifier=eventID,
+                        name=eventInfo["name"],
+                        points=eventInfo["points"],
+                        rankPoints=eventInfo["rankPoints"],
+                        allowMultipleRanks=eventInfo["allowMultipleRanks"],
+                        status=eventInfo["status"],
+                        startTime=startTime,
+                        endTime=endTime
+                    )
+                    loadedEvents[eventID] = loadedEvent
+
+                loadedTourney.events = loadedEvents
+
+                cls.registry[loadedTourney.id] = loadedTourney
+                log(f"Tourney '{loadedTourney.name}' loaded.", "SUCCESS")
+
+            except Exception as e:
+                failLoads = failLoads + 1
+                log(f"({failLoads}) Failed to load tourney {tourneyID} due to error: {e}", "ERROR")
+
+        log(f"Successfully loaded {len(cls.registry)} / {len(cls.registry) + failLoads} tourneys.", "SUCCESS")
+
+    #
+    # Class methods
+    #
+
     @classmethod
     def createTourney(cls, name):
         for ob in cls.registry.values():
         # Checking for every value (Which is an object) in the registry is the same as the name argument.
             if ob.name == name:
                 log(f"The tourney: {name} already exists.", "ERROR")
-                return None
+                return f"The tourney: {name} already exists."
             
-        unqiueId = uniqueIDGenerator(registry=cls.registry, prefix="TRN")
+        uniqueId = uniqueIDGenerator(registry=cls.registry, prefix="TRN")
 
-        newTourney = cls(identifier=unqiueId, name=name)
+        newTourney = cls(identifier=uniqueId, name=name)
 
-        cls.registry[unqiueId] = newTourney
+        cls.registry[uniqueId] = newTourney
         log(f"Team '{name}' created.", "SUCCESS")
 
         return newTourney
@@ -35,7 +141,7 @@ class Tourney:
     @classmethod
     def delTourney(cls, ob):
         # It pops out the ID from the registry. The pop() function returns true when successful.
-        removedTourney = cls.registry.pop(ob.id, None)
+        removedTourney = cls.registry.pop(ob.id)
 
         # Checks if it was successfully popped out. If False then team is not in the registry
         if removedTourney:
@@ -43,7 +149,7 @@ class Tourney:
             return True
         else:
             log(f"Team: {ob.name} not found", "ERROR")
-            return False
+            return f"Team: {ob.name} not found",
     
     @classmethod
     def getTourney(cls, id=None, name=None):
@@ -68,11 +174,11 @@ class Tourney:
         else:
             # Returns nothing when both arguments are None.
             log(f"No arguments was entered", "ERROR")
-            return None
+            return "No arguments entered"
             
         # Returns None when no Member is found in the registry with the ID or Username.
         log(f"No tourney was found with the name: {name} or the ID: {id}", "ERROR")
-        return None
+        return "No tourney found"
 
     @classmethod
     def getTourneyRegistry(cls):

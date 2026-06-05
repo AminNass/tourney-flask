@@ -1,7 +1,13 @@
 {% extends 'base.html' %}
 
-{% block title %}Home{% endblock %}
+{% block title %}About{% endblock %}
+
+{% block head %}
+<script src="{{ url_for('static', filename='js/about.js') }}?v={{ range(1, 99999)|random }}"></script>
+{% endblock %}
 
 {% block content %}
     Welcome to my app, where you can manage tourneys easily. This app allows for management for members, teams, events and the tourneys themselves.
+
+    <button onclick="debug()">Open Debug Terminal</button>
 {% endblock %}

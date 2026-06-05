@@ -67,14 +67,26 @@ class App:
             for team in teams:
                 # Declaring team member info object.
                 log(f"getting member data for team {team}")
-                teamMembers = team.members
-                team.membersInfo = []
-                team.memberCount = len(teamMembers)
-                for teamMember in teamMembers:
-                    # Appending team member info into each team.
-                    log(f"getting member data for team {team.name}, for member {teamMember}")
-                    memberInfo = Members.Members.getMember(id=teamMember).getMemberInfo()
-                    team.membersInfo.append(memberInfo)
+                teamMembers = None
+                if hasattr(team, 'members'):
+                    teamMembers = team.members
+                    team.membersInfo = []
+                    team.memberCount = len(teamMembers)
+                    for teamMember in teamMembers:
+                        # Appending team member info into each team.
+                        log(f"getting member data for team {team.name}, for member {teamMember}")
+                        memberInfo = Members.Members.getMember(id=teamMember).getMemberInfo()
+                        team.membersInfo.append(memberInfo)
+                else:
+                    teamMember = team.member
+                    team.memberCount = 0
+                    team.memberInfo = [["","","",""]]
+                    team.type = "I"
+                    if teamMember is not None:
+                        team.memberCount = 1
+                        memberInfo = Members.Members.getMember(id=teamMember).getMemberInfo()
+                        team.memberInfo = [memberInfo]
+
 
             return render_template(
                 "teams.html",
@@ -112,15 +124,23 @@ class App:
         def tourneyManager(tourneyid):
 
             tourney = Tourney.Tourney.getTourney(id=tourneyid)
+            teams = Teams.Teams.getTeamRegistry()
 
             if not isinstance(tourney, Tourney.Tourney):
                 return tourneys()
 
             tourney.overallPoints = tourney.getAllTeamPoints()
 
+            for eventID, event in tourney.events.items():
+                event.teamInfo = {}
+                for teamID, points in event.points.items():
+                    team = Teams.Teams.getTeam(id=teamID)
+                    event.teamInfo[team.id] = [team.id, team.name, points]
+
             return render_template(
                 "tourneyManager.html",
-                tourney=tourney
+                tourney=tourney,
+                teamsRegistry=teams
             )
 
 
@@ -211,12 +231,15 @@ class App:
 
             data = request.get_json()
             name = data.get("name")
+            iTeam = data.get("iTeam")
 
             if not name:
                 log("Failed to create member: Missing Fields", "ERROR")
                 return jsonify({"status": "error", "message": "All fields are required"})
 
-            newTeam = Teams.Teams.createTeam(name)
+            newTeam = None
+            if iTeam: newTeam = Teams.Teams.createTeam(name, type="I")
+            else: newTeam = Teams.Teams.createTeam(name)
 
             if isinstance(newTeam, Teams.Teams):
                 return jsonify({"status": "success", "message": f"Member with username: {newTeam.name} has been created."})
@@ -365,6 +388,25 @@ class App:
 
             return jsonify({"status": "success", "message": f"Saved teams successfully."})
 
+        @self.app.route("/api/createTourney", methods=["POST"])
+        def createTourney():
+            log("Received request to create tourney.")
+
+            data = request.get_json()
+            name = data.get("name")
+
+            if not name:
+                log("Failed to create tourney: Missing Fields", "ERROR")
+                return jsonify({"status": "error", "message": "All fields are required"})
+
+            newTourney = Tourney.Tourney.createTourney(name)
+
+            if isinstance(newTourney, Tourney.Tourney):
+                return jsonify(
+                    {"status": "success", "message": f"Member with username: {newTourney.name} has been created."})
+            else:
+                return jsonify({"status": "error", "message": f"{newTourney}"})
+
         @self.app.route("/api/changeTourneyEvent", methods=["POST"])
         def changeTourneyEvent():
             log("Received request to change tourney event information/")
@@ -425,6 +467,146 @@ class App:
 
             return jsonify({"status": "success", "message": f"{result}"})
 
+        @self.app.route("/api/addTeamToEventTourney", methods=["POST"])
+        def addTeamToEventTourney():
+            log("Received request to add team to event tourney")
+
+            data = request.get_json()
+            tourneyID = data.get("tourneyID")
+            eventID = data.get("eventID")
+            teamName = data.get("teamName")
+
+            tourney = Tourney.Tourney.getTourney(id=tourneyID)
+            tourneyEvent = tourney.getEvent(id=eventID)
+
+            team = Teams.Teams.getTeam(name=teamName)
+
+            if not isinstance(team, Teams.Teams): return jsonify({"status": "error", "message": f"Team with name {teamName} does not exist"})
+
+            result = tourneyEvent.addTeam(team)
+
+            if result is True:
+                return jsonify({"status": "success", "message": f"Successfully added team {teamName}"})
+
+            return jsonify({"status": "error", "message": f"{result}"})
+
+        @self.app.route("/api/AddRankToTeam", methods=["POST"])
+        def AddRankToTeam():
+            log("Received request to add rank to team tourney")
+
+            data = request.get_json()
+            tourneyID = data.get("tourneyID")
+            eventID = data.get("eventID")
+            selectedTeam = data.get("selectedTeam")
+            selectedRank = data.get("selectedRank")
+
+            log(f"{tourneyID}, {eventID}, {selectedTeam}, {selectedRank}")
+            tourney = Tourney.Tourney.getTourney(id=tourneyID)
+            tourneyEvent = tourney.getEvent(id=eventID)
+
+            result = tourneyEvent.addRank(Teams.Teams.getTeam(id=selectedTeam), selectedRank)
+
+            if result is True:
+                return jsonify({"status": "success", "message": f"Successfully added rank {selectedRank}"})
+
+            return jsonify({"status": "error", "message": f"{result}"})
+
+        @self.app.route("/api/resetTeamPointsForTourneyEvent", methods=["POST"])
+        def resetTeamPointsForTourneyEvent():
+            log("Received request to reset team points for tourney event")
+
+            data = request.get_json()
+            tourneyID = data.get("tourneyID")
+            eventID = data.get("eventID")
+            teamID = data.get("teamID")
+
+            tourney = Tourney.Tourney.getTourney(id=tourneyID)
+            tourneyEvent = tourney.getEvent(id=eventID)
+            team = Teams.Teams.getTeam(id=teamID)
+
+            result = tourneyEvent.resetPoints(team)
+
+            if result is True:
+                return jsonify({"status": "success", "message": f"Successfully reset team points for {team.name}"})
+
+            return jsonify({"status": "error", "message": f"{result}"})
+
+        @self.app.route("/api/removeTeamFromTourneyEvent", methods=["POST"])
+        def removeTeamFromTourneyEvent():
+            log("Received request to remove team from tourney event")
+
+            data = request.get_json()
+            tourneyID = data.get("tourneyID")
+            eventID = data.get("eventID")
+            teamID = data.get("teamID")
+
+            tourney = Tourney.Tourney.getTourney(id=tourneyID)
+            tourneyEvent = tourney.getEvent(id=eventID)
+            team = Teams.Teams.getTeam(id=teamID)
+
+            result = tourneyEvent.removeTeam(team)
+
+            if result is True:
+                return jsonify({"status": "success", "message": f"Removed team {team.name} from tourney event."})
+
+            return jsonify({"status": "error", "message": f"{result}"})
+
+        @self.app.route("/api/addEventToTourney", methods=["POST"])
+        def addEventToTourney():
+            log("Received request to add event to tourney event")
+
+            data = request.get_json()
+            tourneyID = data.get("tourneyID")
+            eventName = data.get("eventName")
+            eventNewName = data.get("eventNewName")
+
+            tourney = Tourney.Tourney.getTourney(id=tourneyID)
+            event = Events.Events.getEvent(name=eventName)
+
+            result = tourney.addEvent(eventNewName, event)
+
+            if isinstance(result, Events.Events):
+                return jsonify({"status": "success", "message": f"Successfully added event {eventName}"})
+
+            return jsonify({"status": "error", "message": f"{result}"})
+
+        @self.app.route("/api/deleteTourney", methods=["POST"])
+        def deleteTourney():
+            log("Received request to delete tourney event")
+
+            data = request.get_json()
+            tourneyID = data.get("tourneyID")
+
+            tourney = Tourney.Tourney.getTourney(id=tourneyID)
+
+            result = tourney.delTourney(tourney)
+
+            if result is True:
+                return jsonify({"status": "success", "message": f"Successfully deleted tourney {tourneyID}"})
+
+            return jsonify({"status": "error", "message": f"{result}"})
+
+        @self.app.route("/api/saveTourneys", methods=["POST"])
+        def saveTourneys():
+            log("Received request to save tourneys")
+
+            Tourney.Tourney.saveData()
+
+            return jsonify({"status": "success", "message": f"Saved teams successfully."})
+
+
+
+        @self.app.route("/api/debug", methods=["POST"])
+        def debug():
+            import subprocess
+
+            try:
+                subprocess.Popen(["cmd", "/k", "echo --- LOGS START --- && echo Showing current activity..."])
+            except Exception as e:
+                log("If you are getting this error its likely because this feature is only for windows.", "ERROR")
+                return jsonify({"status": "error", "message": f"This feature is only for windows."})
+
+            return jsonify({"status": "success", "message": f"Debug Terminal in opened"})
 
 
 

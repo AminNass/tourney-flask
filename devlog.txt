@@ -909,14 +909,14 @@ updated by code for when creating a member:
             return f"All names must be below {lim} characters."
 
         # Generates a unqiue ID.
-        unqiueId = Common.uniqueIDGenerator(registry=cls.registry, prefix="USER")
+        uniqueId = Common.uniqueIDGenerator(registry=cls.registry, prefix="USER")
 
         # Then it creates a new object of itself (cls) and puts in the arguments.
         # Added " ".join(text.split()) to remove white space and extra spaces.
-        newMember = cls(identifier=unqiueId, username=remWs(username), firstname=remWs(firstname), lastname=remWs(lastname))
+        newMember = cls(identifier=uniqueId, username=remWs(username), firstname=remWs(firstname), lastname=remWs(lastname))
 
         # Adds the member to the registry.
-        cls.registry[unqiueId] = newMember
+        cls.registry[uniqueId] = newMember
         log(f"Member '{username}' created.", "SUCCESS")
         # Returns the new member to né used in the main class.
         return newMember

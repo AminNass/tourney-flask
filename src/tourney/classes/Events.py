@@ -266,20 +266,21 @@ class Events:
 
     def addTeam(self, team):
 
-        if team in self.points:
+        if team.id in self.points:
             log(f"Team: {team} is already in this event", "ERROR")
-            return
+            return f"{team.name} is already in this event"
 
-        self.points[team] = 0
-        return
+        self.points[team.id] = 0
+        return True
 
     def removeTeam(self, team):
-        result = self.points.pop(team)
-        if result == None:
-            log(f"{team} Team not found", "ERROR")
+        result = self.points.pop(team.id)
+        if result is None:
+            log(f"{team.name} Team not found", "ERROR")
+            return f"{team.name} not found"
         else:
             log(f"Team found: {team}", "SUCCESS")
-        return
+        return True
 
     def isTeamInEvent(self, team):
         return team.id in self.points.keys()
@@ -288,17 +289,23 @@ class Events:
 
         if team.id not in self.points:
             log(f"Team: {team.name} is not in this event", "ERROR")
-            return
+            return f"{team.name} is not in this event"
         elif not self.allowMultipleRanks:
             if team.id in self.points.keys():
                 if self.points[team.id] > 0:
                     log(f"Team: {team.name} already gained a rank in this event", "ERROR")
-                    return
+                    return f"Team: {team.name} already gained a rank in this event (AllowMultipleRanks is set to False!)."
 
         points = self.rankPoints[rank] + self.points[team.id]
         self.points[team.id] = points
         log(f"Rank gained: {rank} points gained: {points}", "SUCCESS")
-        return
+        return True
+
+    def resetPoints(self, team):
+        if team.id not in self.points:
+            return "Team not in this event"
+        self.points[team.id] = 0
+        return True
 
     def removeRank(self, team, rank):
 

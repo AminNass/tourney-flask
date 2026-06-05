@@ -1,9 +1,11 @@
 function submitTeamForm() {
 
     const nameElement = document.getElementById("inputName")
+    const iTeamCheck = document.getElementById("ITeamChecked")
 
     const data = {
         name: nameElement.value.trim(),
+        iTeam: iTeamCheck.checked
     };
 
     console.log("Sending data to Python Flask", data);
@@ -24,6 +26,7 @@ function submitTeamForm() {
             // Check if response says success
             if (data.status === "success") {
                 name.value = "";
+                iTeamCheck.checked = false;
 
                 console.log(data.message);
                 window.location.reload();
@@ -42,6 +45,9 @@ function editTeam(id, name, members) {
     const editFormTableMembers = document.getElementById("tableEditTeamForm-Members");
 
     const EditFormTableMemberSelect = document.getElementById("tableEditTeamForm-MemberList-Select");
+
+    // Clear out old data in selection.
+    EditFormTableMemberSelect.innerHTML = "";
 
     members.forEach((member) => {
 

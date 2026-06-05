@@ -28,20 +28,7 @@ class Main:
 
         Events.Events.loadData()
 
-        log(f"Dictionary check: {list(Members.Members.getMemberRegistry())}")
-
-        log(Members.Members.getMember(username="JoeC").lastname)
-
-        Teams.Teams.createTeam("Team Falcons")
-
-        Teams.Teams.getTeam(name="Team Falcons").addMember(Members.Members.getMember(username="MikeAhhh"))
-
-        Teams.Teams.getTeam(name="Team Falcons").addMember(Members.Members.getMember(username="JoeC"))
-
-        log(Members.Members.formatData())
-
-        Tourney.Tourney.createTourney("RLCS")
-        Tourney.Tourney.getTourney(name="RLCS").addEvent("Major 2nd", Events.Events.createEvent("RLCS Major 2nd"))
+        Tourney.Tourney.loadData()
 
         self.appModule.startWindow()
 
