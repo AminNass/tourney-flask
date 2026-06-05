@@ -1089,4 +1089,10 @@ our API. So it will display exactly what my API is saying what's wrong which inf
 
 That is basically the ins and outs of createMember system. There is a terminology called backend and frontend.
 The frontend is the html/javascript which sends request to our backend which is the python flask api that I have made.
-JavaScript does do any of the member creation. It just sends requests for a member to be created.
+JavaScript dosent do any of the member creation. It just sends requests for a member to be created.
+
+To put everything into one easy explantion our backend (flask) renders html code. You are able to send arguements through our hmtl which gives us
+the control of looping through all sorts of datatypes. We are able to display them anywhere in our html code. For loops allows html elements to repeat
+themselves multiple times. This allowed us to do things like looping through every member in our table body and using the variables we sent through
+to show the member information for that member. Our frontend (JavaSript) is able to send requests to the backend which allows for our backend to fullfill
+any request that our frontend needs. Our backend handles validaiton allowing extra validation to be added in the future without needing to change the front end.
