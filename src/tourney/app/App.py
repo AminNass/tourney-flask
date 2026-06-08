@@ -564,6 +564,25 @@ class App:
 
             return jsonify({"status": "error", "message": f"{result}"})
 
+        @self.app.route("/api/deleteTourneyEvent", methods=["POST"])
+        def deleteTourneyEvent():
+            log("Received request to delete tourney event")
+
+            data = request.get_json()
+            tourneyID = data.get("tourneyID")
+            eventID = data.get("eventID")
+
+            tourney = Tourney.Tourney.getTourney(id=tourneyID)
+            tourneyEvent = tourney.getEvent(id=eventID)
+
+            result = tourney.removeEvent(tourneyEvent)
+
+            if result is True:
+                return jsonify({"status": "success", "message": f"Successfully deleted tourney event {tourneyID}"})
+
+            return jsonify({"status": "error", "message": f"{result}"})
+
+
         @self.app.route("/api/deleteTourney", methods=["POST"])
         def deleteTourney():
             log("Received request to delete tourney event")

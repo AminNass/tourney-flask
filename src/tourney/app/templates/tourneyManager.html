@@ -52,7 +52,7 @@
             <input type="text" id="inputAddEvent">
     </div>
     <div style="margin-bottom: 10px;">
-            <label>Event Name:</label><br>
+            <label>Event New Name:</label><br>
             <input type="text" id="inputAddEventNewName">
     </div>
     <p>Please enter the new name for the event<br>(You can enter the same if there are not any other events in this tourney with the same name.)</p>
@@ -179,6 +179,8 @@
         <button onclick="addRankToTeam('{{ tourney.id }}', '{{ eventID }}')">Add Rank</button>
     {% endif %}
 
+    <br><br>
+    <button onclick="deleteTourneyEvent('{{ tourney.id }}', '{{ eventID }}')">Delete Event</button>
 
     {% endfor %}
 

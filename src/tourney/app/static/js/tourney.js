@@ -263,6 +263,36 @@ function submitRemoveTeam(tourneyID, eventID) {
         })
 }
 
+function deleteTourneyEvent(tourneyID, eventID) {
+
+    const data = {
+        tourneyID: tourneyID,
+        eventID: eventID,
+    }
+
+    fetch('/api/deleteTourneyEvent', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+    })
+        .then(response => {
+            // Get response from flask.
+            return response.json();
+        })
+        .then(data => {
+            // Check if response says success
+            if (data.status === "success") {
+                console.log(data.message);
+                window.location.reload();
+            } else {
+                // If response is not successful then output error.
+                alert("Error: " + data.message);
+            }
+        })
+}
+
 function addEventToTourney(tourneyID) {
 
     const inputEventNameElement = document.getElementById("inputAddEvent")
