@@ -1,7 +1,8 @@
 import json
+from typing import Self
 
-from tourney.classes.Common import uniqueIDGenerator, saveDataDirectory as saveDir, log as log, \
-    removeWhitespace as remWs, isInCharLimit as limCheck, zeroChar as zChar, timeNow as now
+import tourney.classes.Members
+from tourney.classes.Common import uniqueIDGenerator, saveDataDirectory as saveDir, log as log, removeWhitespace as remWs, isInCharLimit as limCheck, zeroChar as zChar, timeNow as now
 
 
 class Teams:
@@ -9,7 +10,18 @@ class Teams:
     saveDirectory = saveDir() / "Teams"
     nameCharLimit = 25
 
-    def __init__(self, identifier=None, name=None, members=None):
+    def __init__(self,
+                 identifier: str | None = None,
+                 name: str | None = None,
+                 members: str | None = None
+                 ):
+        """
+        Init class for Teams. Allows object creation for teams.
+        This should not be used to create new teams as it won't appear in the registry.
+        :param identifier:
+        :param name:
+        :param members:
+        """
         self.name = name
         self.id = identifier
 
@@ -20,7 +32,10 @@ class Teams:
 
     @classmethod
     def saveData(cls, autoSave=False):
-
+        """
+        Function for saving Teams data to the local user save directory.
+        :param autoSave:
+        """
         cls.saveDirectory.mkdir(parents=True, exist_ok=True)
 
         if autoSave:
@@ -50,7 +65,10 @@ class Teams:
 
     @classmethod
     def loadData(cls):
-
+        """
+        This loads data from the local user save directory.
+        :return:
+        """
         file = cls.saveDirectory / "Teams.json"
 
         if not file.exists():
@@ -94,8 +112,14 @@ class Teams:
     #
 
     @classmethod
-    def createTeam(cls, name, type=None):
-
+    def createTeam(cls, name: str, type: str | None = None) -> str | Self:
+        """
+        This method creates a member, handles name lengths, whitespace and duplicate names.\n
+        * Changing the type to 'I' removes 'members' variable and creates 'member' variable.
+        :param name:
+        :param type:
+        :return:
+        """
         for ob in cls.registry.values():
             # Checking for every value (Which is an object) in the registry is the same as the name argument.
             if ob.name.lower() == remWs(name.lower()):
@@ -112,7 +136,7 @@ class Teams:
             log(f"Cannot create [{prefix}: {name}], name is more than {lim} characters.", "ERROR")
             return f"Name must be below {lim} characters."
 
-        # Generates a unqiue ID.
+        # Generates a unique ID.
         uniqueId = uniqueIDGenerator(registry=cls.registry, prefix=prefix)
         # creates a new team as an object.
         newTeam = cls(identifier=uniqueId, name=remWs(name))
@@ -127,8 +151,13 @@ class Teams:
         return newTeam
 
     @classmethod
-    def removeTeam(cls, ob):
-        # It pops out the ID from the registry. The pop() function returns return when sucessfull.
+    def removeTeam(cls, ob: Self) -> bool | str:
+        """
+        This removes team from registry.
+        :param ob:
+        :return:
+        """
+        # It pops out the ID from the registry. The pop() function returns return when successful.
         removedTeam = cls.registry.pop(ob.id, None)
 
         # Checks if it was sucessfully popped out. If False then team is not in the registry
@@ -137,11 +166,17 @@ class Teams:
             return True
         else:
             log(f"Team: {ob.name} not found", "ERROR")
-            return False
+            return f"Team {ob.name} not found"
 
     @classmethod
-    def changeInformation(cls, ob, newName=None):
-        # Setting arguements to variable
+    def changeInformation(cls, ob: Self, newName: str | None = None) -> Self | str:
+        """
+        This changes information for a Team.
+        :param ob:
+        :param newName:
+        :return:
+        """
+        # Setting arguments to variable
         name = zChar(newName)
 
         if name is None:
@@ -161,60 +196,68 @@ class Teams:
                 log(f"The Username: {newName} already exists.", "ERROR")
                 return "Username already exists."
 
-        # Create a new object of itself:
-        # Check if it has 'members' to handle individual teams correctly
-        if hasattr(ob, 'members'):
-            newTeam = cls(identifier=ob.id, name=name, members=ob.members)
-        else:
-            newTeam = cls(identifier=ob.id, name=name)
-            del newTeam.members
-            newTeam.member = ob.member
+        # Update name
+        editedTeam = cls.getTeam(id=ob.id)
+        editedTeam.name = name
 
         # Updates the registry, using the id.
-        cls.registry[ob.id] = newTeam
+        # cls.registry[ob.id] = newTeam
         # Returns the new updated object.
-        return newTeam
+        return editedTeam
 
     @classmethod
-    def getTeam(cls, id=None, name=None):
-
+    def getTeam(cls, id: str | None = None, name: str | None = None) -> Self | str:
+        """
+        This method gets and returns the team object from the registry
+        :param id:
+        :param name:
+        :return:
+        """
         # This gives 2 options for getting the object of the team.
 
-        # Runs when there is something other than None in the ID arguement.
-        if not id == None:
+        # Runs when there is something other than None in the ID argument.
+        if not id is None:
             # Loops through every value in the team registry.
             for ido in cls.registry.values():
-                # Compares the id found in the object with the ID arguement.
+                # Compares the id found in the object with the ID argument.
                 if ido.id == id:
                     # Return the value in the registry (Which is the object).
                     return ido
-            return f"Could not find team with id: {id}"
         # Runs when id is none and name is something other than None.
-        elif not name == None:
+        elif not name is None:
             for ob in cls.registry.values():
-                # Checking for every value (Which is a object) in the regisry is the same as the name arugement.
+                # Checking for every value (Which is a object) in the registry is the same as the name argument.
                 if ob.name == name:
                     # Returns when found the name.
                     return ob
-            return f"Could not find team with name: {name}"
         else:
-            # Returns nothing when both arugments are None.
-            log(f"No arguements was entered", "ERROR")
-            return "No arugments was entered."
+            # Returns nothing when both arguments are None.
+            log(f"No arguments was entered", "ERROR")
+            return "No arguments was entered."
 
         # Returns None when no team is found in the registry with the ID or Username.
         log(f"No team was found with the name: {name} or the ID: {id}", "ERROR")
-        return None
+        return f"No team was found with the name: {name} or the ID: {id}"
 
     @classmethod
-    def getTeamRegistry(cls):
+    def getTeamRegistry(cls) -> dict[str, Self]:
+        """
+        Returns team registry.
+        :return:
+        """
         return cls.registry
 
     #
     # Object Functions
     #
 
-    def addMember(self, *args):
+    def addMember(self, *args: tourney.classes.Members.Members) -> bool | str:
+        """
+        This method adds members the team. You can pass multiple members at once.\n
+        * If your adding a member to an individual team it will replace the original Member.
+        :param args:
+        :return:
+        """
         # *ARGS: This is a list of Members, the code works find if you just put one.
 
         # Loops for every member in this team
@@ -224,7 +267,7 @@ class Teams:
                 for j in args:
                     if i == j.id:
                         log(f"{j.username}, is already a member of {self.name}", "ERROR")
-                        return "This member is already a member of this team."
+                        return f"The member {j.username} is already a member of this team."
 
             for i in args:
                 self.members.append(i.id)
@@ -236,12 +279,17 @@ class Teams:
 
     # This function expects ids.
     # I made it like java for loop.
-    def removeMember(self, *args):
-
+    def removeMember(self, *args: tourney.classes.Members.Members) -> bool:
+        """
+        This function removes from the team and supports multiple members.\n
+        * This method doesn't throw an error (skips member) when a Member is not in the team.
+        :param args:
+        :return:
+        """
         if hasattr(self, 'members'):
             for i in args:
                 for j in range(len(self.members)):
-                    log(f"{j}, {i}: {len(self.members)}.", "ERROR")
+                    log(f"{j}, {i}: {len(self.members)}.")
                     if i == self.members[j]:
                         self.members.pop(j)
                         log(f"REMOVED: {i} {j}: {len(self.members)}", "SUCCESS")
@@ -252,28 +300,37 @@ class Teams:
             self.member = None
             log(f"Member has been removed.", "SUCCESS")
 
-        return
+        return True
 
-    def getMembers(self):
+    def getMembers(self) -> list[tourney.classes.Members.Members] | tourney.classes.Members.Members | None:
+        """
+        Returns all members in the team.
+        :return:
+        """
         from tourney.classes import Members as Members
 
         foundMembers = []
 
-        if hasattr(self, 'members'):
+        # Get Member registry
+        memberRegistry = Members.Members.getMemberRegistry()
 
-            # Get Member registry
-            memberRegistry = Members.Members.getMemberRegistry()
+        if hasattr(self, 'members'):
 
             # Loop through every member inside of this team.
             for mId in self.members:
                 # Check if the Ids in member registry.
                 if mId in memberRegistry:
-                    # When found Id, get the value using the mId.
+                    # When found I'd, get the value using the mId.
                     memberObject = memberRegistry[mId]
                     foundMembers.append(memberObject)
                 else:
                     log(f"Id not found in Member registry: {mId} not found.")
-        else: foundMembers = self.member
+        else:
+            if self.member in memberRegistry:
+                foundMembers = memberRegistry[self.member]
+            else:
+                log(f"Id not found in Member registry: {self.member} not found.")
+                return None
 
         # Returns a list of Member objects.
         return foundMembers

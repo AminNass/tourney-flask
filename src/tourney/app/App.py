@@ -219,12 +219,6 @@ class App:
 
             return jsonify({"status": "success", "message": f"Saved members successfully."})
 
-        @self.app.route("/api/getMemberByID", methods=["GET"])
-        def getUserByID():
-            data = request.get_json()
-            foundMember = Members.Members.getMember(id=data.get("memberID"))
-            return jsonify(foundMember.getMemberInfo())
-
         @self.app.route(f"/api/createTeam", methods=["POST"])
         def createTeam():
             log("Received request to create a new team")

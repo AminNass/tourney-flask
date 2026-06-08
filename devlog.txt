@@ -1096,3 +1096,53 @@ the control of looping through all sorts of datatypes. We are able to display th
 themselves multiple times. This allowed us to do things like looping through every member in our table body and using the variables we sent through
 to show the member information for that member. Our frontend (JavaScript) is able to send requests to the backend which allows for our backend to fullfill
 any request that our frontend needs. Our backend handles validaiton allowing extra validation to be added in the future without needing to change the front end.
+
+I have actually created on getter in our backend. It is the getTourneyEventLength which is used for when viewing a tourney, you can view it's an events and when you
+want to view an event length, under the event in this tourney you can click a button to get the event length. I have shown already the event length function and how it
+was made. This getter makes use of this function. I decided to use a getter since if the event has already started this information will always be changing.
+Passing it as a parameter would not work the best as data won't be updated until reload. I could make it reload, but it will then it will reset where the user is looking at
+and could potentially make the user loose data that is lost. This is how the getter works:
+
+@self.app.route("/api/getTourneyEventLength", methods=["GET"])
+    def getTourneyEventLength():
+        log("Received request to get tourney event length")
+
+        tourneyID = request.args.get("tourneyID")
+        eventID = request.args.get("eventID")
+
+        tourney = Tourney.Tourney.getTourney(id=tourneyID)
+        tourneyEvent = tourney.getEvent(id=eventID)
+
+        result = str(tourneyEvent.eventLength())
+
+        return jsonify({"status": "success", "message": f"{result}"})
+
+This is the getTourneyEventLength function. The first thing it does is gets arguements from the url. Since you cannot
+use JSON for a getter you must append any data to the URL. ${tourneyID} and ${eventID} just replaces the IDs with the arugments.
+The first thing the function does is get the element that will be displaying the time by its ID. Next is will create the url,
+with its data. Then it will fetch that url using the method 'GET'. Then we can get its reponse and if they returned success as status
+that means the result was successful. If not then it will display the error message.
+
+function getEventLength(tourneyID, eventID) {
+   const timeElement = document.getElementById("timeBox-" + eventID);
+
+   // Passing data inside the URL string using query parameters
+   const url = `/api/getTourneyEventLength?tourneyID=${tourneyID}&eventID=${eventID}`;
+
+   fetch(url, {
+       method: 'GET'
+   })
+       .then(response => response.json())
+       .then(data => {
+           if (data.status === "success") {
+               timeElement.textContent = data.message;
+           } else {
+               alert("Error: " + data.message);
+           }
+       })
+       .catch(error => {
+           console.error("Fetch error:", error);
+       });
+}
+
+Getters work the other way round and send JSON back to the JavaScript. This is the only getter I used.

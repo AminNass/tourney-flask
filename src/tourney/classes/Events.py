@@ -1,5 +1,7 @@
 import json
+from typing import Any, Self
 
+import tourney.classes.Teams
 from tourney.classes.Common import uniqueIDGenerator, log as log, saveDataDirectory as saveDir, removeWhitespace as remWs, isInCharLimit as limCheck, timeNow as now, zeroChar as zChar
 import datetime
 
@@ -13,7 +15,18 @@ class Events:
                  points=None, rankPoints=None,
                  allowMultipleRanks=False,
                  status=None, startTime=None, endTime=None):
-
+        """
+        Class init code to create an event object. Shouldn't be used to create an Event.\n
+        * These arguments must be present for data loading (loadData() just creates an Event Object with these arguments).
+        :param identifier: 
+        :param name: 
+        :param points: 
+        :param rankPoints: 
+        :param allowMultipleRanks: 
+        :param status: 
+        :param startTime: 
+        :param endTime: 
+        """
         self.id = identifier
         self.name = name
 
@@ -30,7 +43,10 @@ class Events:
 
     @classmethod
     def saveData(cls, autoSave=False):
-
+        """
+        Function to save data to local save directory.
+        :param autoSave: 
+        """
         cls.saveDirectory.mkdir(parents=True, exist_ok=True)
 
         if autoSave:
@@ -63,7 +79,10 @@ class Events:
 
     @classmethod
     def loadData(cls):
-
+        """
+        Function to load data from local save directory.
+        :return: 
+        """
         file = cls.saveDirectory / "Events.json"
 
         if not file.exists():
@@ -105,8 +124,11 @@ class Events:
 
 
     @classmethod
-    def createEvent(cls, name):
-
+    def createEvent(cls, name: str) -> Self | str:
+        """
+        This function creates a new event and adds it to the registry.
+        :rtype: str | Self
+        """
         for ob in cls.registry.values():
         # Checking for every value (Which is an object) in the registry is the same as the name argument.
             if ob.name.lower() == remWs(name.lower()):
@@ -119,32 +141,43 @@ class Events:
             log(f"Cannot create {name}, name is more than {lim} characters.", "ERROR")
             return f"Name must be below {lim} characters."
 
-        unqiueId = uniqueIDGenerator(registry=cls.registry, prefix="EVENT")
+        uniqueId = uniqueIDGenerator(registry=cls.registry, prefix="EVENT")
 
-        newEvent = cls(identifier=unqiueId, name=remWs(name))
+        newEvent = cls(identifier=uniqueId, name=remWs(name))
         newEvent.status = "Ready"
 
-        cls.registry[unqiueId] = newEvent
+        cls.registry[uniqueId] = newEvent
         log(f"Team '{name}' created.")
 
         return newEvent
     
     @classmethod
-    def delEvent(cls, ob):
+    def delEvent(cls, ob: Self) -> bool | str:
+        """
+        This function delete and Event from the registry.
+        :param ob: 
+        :return: 
+        """
         # It pops out the ID from the registry. The pop() function returns true when successful.
         deletedEvents = cls.registry.pop(ob.id, None)
 
-        # Checks if it was sucessfully popped out. If False then team is not in the registry
+        # Checks if it was successfully popped out. If False then team is not in the registry
         if deletedEvents:
             log(f"Team: {ob.name} removed", "SUCCESS")
             return True
         else:
             log(f"Team: {ob.name} not found", "ERROR")
-            return False
+            return f"{ob.name} not found"
 
     @classmethod
-    def changeInformation(cls, ob, newName=None):
-        # Setting arguements to variable
+    def changeInformation(cls, ob: Self, newName: str | None = None):
+        """
+        This function changes information in an event.
+        :param ob: 
+        :param newName: 
+        :return: 
+        """
+        # Setting arguments to variable
         name = zChar(newName)
 
         if name is None:
@@ -172,8 +205,13 @@ class Events:
         return editedEvent
     
     @classmethod
-    def getEvent(cls, id=None, name=None):
-
+    def getEvent(cls, id: str | None = None, name: str | None = None) -> Self | str:
+        """
+        This function get and returns the event using the id or name.
+        :param id: 
+        :param name: 
+        :return: 
+        """
         # This gives 2 options for getting the object of the event.
 
         # Runs when there is something other than None in the ID arguement.
@@ -194,14 +232,18 @@ class Events:
         else:
             # Returns nothing when both arugments are None.
             log("No arguments was entered", "ERROR")
-            return None
+            return "No arguments was entered"
             
         # Returns None when no event is found in the registry with the ID or Username.
         log(f"No event was found with the name: {name} or the ID: {id}", "ERROR")
-        return None
+        return f"No event was found with the name: {name} or the ID: {id}"
     
     @classmethod
-    def getTeamRegistry(cls):
+    def getTeamRegistry(cls) -> dict[str, Self]:
+        """
+        Returns the Team Registry.
+        :return: 
+        """
         # Return the entire team registry
         return cls.registry
     
@@ -209,7 +251,12 @@ class Events:
     #  Object Methods
     #
 
-    def startEvent(self):
+    def startEvent(self) -> str:
+        """
+        This function starts the Event.\n
+        * Returns 'success' when the event has started, if not then a error as a string.
+        :return: 
+        """
         if self.status == "Ready":
             startDateTime = datetime.datetime.now().replace(microsecond=0)
             log(f"{self.name} Event has started: {startDateTime}", "SUCCESS")
@@ -220,7 +267,12 @@ class Events:
         log(f"{self.name} Event is not ready yet", "ERROR")
         return "Event not ready yet"
     
-    def endEvent(self):
+    def endEvent(self) -> str:
+        """
+        This function ends the Event.\n
+        * Returns 'success' when the event has ended, if not then an error as a string.
+        :return: 
+        """
         if self.status == "Started":
             endDateTime = datetime.datetime.now().replace(microsecond=0)
             log(f"{self.name} Event has ended: {endDateTime}", "SUCCESS")
@@ -231,7 +283,12 @@ class Events:
         log(f"{self.name} Event has not started.", "ERROR")
         return "Event not started yet"
     
-    def readyEvent(self):
+    def readyEvent(self) -> str:
+        """
+        This function ready the Event.\n
+        * Returns 'success' when the event has ready, if not then an error as a string.
+        :return: 
+        """
         if self.status == "Ended" or self.status is None:
             self.points = {}
             self.status = "Ready"
@@ -246,7 +303,13 @@ class Events:
         log(f"{self.name} Event is already ready.", "ERROR")
         return "Event is already ready yet"
     
-    def eventLength(self):
+    def eventLength(self) -> datetime.datetime | None:
+        """
+        This function gets event length. If event has started it will return the length between when the event has started and now.
+        If the event has ended it will return the length between when the event has started and ended.
+        if ready then will return None.
+        :return: 
+        """
         if self.status == "Started": return datetime.datetime.now().replace(microsecond=0) - self.startTime
             
         if self.status == "Ended": return self.endTime - self.startTime
@@ -255,8 +318,16 @@ class Events:
             log(f"{self.name} Event cannot have a length when ready.", "ERROR")
         return None
 
-    def rankSettings(self, ranks, points, allowMultipleRanks=None):
-
+    def rankSettings(self, ranks: list[str], points: list[int], allowMultipleRanks: bool | None = None):
+        """
+        This function allows for modification of rank settings. This is what allows to allocate a rank to an amount of points.
+        To use this you must pass through a list of ranks and a list of points. The rank you want the amount of points must be
+        the same index as the amount of points you want.\n
+        * Allow multiple ranks makes sure extra points cannot be added when the points are more than 0 for a team.
+        :param ranks: 
+        :param points: 
+        :param allowMultipleRanks: 
+        """
         self.rankPoints.clear()
 
         for rank, point in zip(ranks, points):
@@ -264,29 +335,49 @@ class Events:
 
         if not allowMultipleRanks is None: self.allowMultipleRanks = allowMultipleRanks
 
-    def addTeam(self, team):
-
+    def addTeam(self, team: tourney.classes.Teams.Teams) -> bool | str:
+        """
+        This function adds a team to an event. All it does is add it to the points variable with the amount of points set to 0.
+        :param team: 
+        :return: 
+        """
         if team.id in self.points:
-            log(f"Team: {team} is already in this event", "ERROR")
+            log(f"Team: {team.name} is already in this event", "ERROR")
             return f"{team.name} is already in this event"
 
         self.points[team.id] = 0
         return True
 
-    def removeTeam(self, team):
+    def removeTeam(self, team: tourney.classes.Teams.Teams) -> bool | str:
+        """
+        This function will remove a team from the Event removing all its points.
+        :param team: 
+        :return: 
+        """
         result = self.points.pop(team.id)
         if result is None:
             log(f"{team.name} Team not found", "ERROR")
             return f"{team.name} not found"
         else:
-            log(f"Team found: {team}", "SUCCESS")
+            log(f"Team found: {team.name}", "SUCCESS")
         return True
 
-    def isTeamInEvent(self, team):
+    def isTeamInEvent(self, team: tourney.classes.Teams.Teams) -> bool:
+        """
+        This function returns true or false if a team is in this evnet.
+        :param team: 
+        :return: 
+        """
         return team.id in self.points.keys()
 
-    def addRank(self, team, rank):
-
+    def addRank(self, team: tourney.classes.Teams.Teams, rank: str) -> bool | str:
+        """
+        This function adds a rank to a team for this event. Each rank gives an amount of points.\n
+        * Ranks and its amount of points must be allocated to this event using rankSettings() function.
+        :param team: 
+        :param rank: 
+        :return: 
+        """
         if team.id not in self.points:
             log(f"Team: {team.name} is not in this event", "ERROR")
             return f"{team.name} is not in this event"
@@ -301,29 +392,47 @@ class Events:
         log(f"Rank gained: {rank} points gained: {points}", "SUCCESS")
         return True
 
-    def resetPoints(self, team):
+    def resetPoints(self, team: tourney.classes.Teams.Teams) -> bool | str:
+        """
+        This function resets the points for a team by setting the amount of points to 0.
+        :param team: 
+        :return: 
+        """
         if team.id not in self.points:
             return "Team not in this event"
         self.points[team.id] = 0
         return True
 
-    def removeRank(self, team, rank):
-
+    def removeRank(self, team: tourney.classes.Teams.Teams, rank: str) -> bool | str:
+        """
+        This function will remove a rank from a team by just subtracting the amount of points that rank gives.
+        :param team: 
+        :param rank: 
+        :return: 
+        """
         if team.id not in self.points:
             log(f"Team: {team.name} is not in this event", "ERROR")
-            return
+            return f"Team: {team.name} is not in this event"
 
         points = self.points[team.id] - self.rankPoints[rank]
         self.points[team.id] = points
         log(f"Rank removed: {rank} points removed: {points}")
-        return
+        return True
 
-    def getAllTeamPoints(self):
+    def getAllTeamPoints(self) -> dict[str, int]:
+        """
+        Returns the points dictionary containing all participating teams and their amount of points.
+        :return: 
+        """
         return self.points
 
-    def getTeamPoints(self, team):
-
+    def getTeamPoints(self, team: tourney.classes.Teams.Teams) -> int:
+        """
+        Returns the amount of points for a particular team.
+        :param team: 
+        :return: 
+        """
         if team.id not in self.points.keys(): return 0
 
-        return self.points[team]
+        return self.points[team.id]
 

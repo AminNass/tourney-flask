@@ -1,0 +1,36 @@
+# This method used to be inside of the members class:
+class Members:
+    @classmethod
+    def formatData(cls):
+        data = [[],[],[],[]]
+
+        IDsList = list(cls.registry.keys())
+
+        # Append to data list
+
+        for ID in IDsList:
+            memberData = cls.getMember(id=ID)
+
+            data[0].append(memberData.id)
+            data[1].append(memberData.username)
+            data[2].append(memberData.firstname)
+            data[3].append(memberData.lastname)
+
+        rowData = list(zip(*data))
+        log(f"Successfully formatted data:\n {rowData}", "SUCCESS")
+        return rowData
+
+# This used to format the data its rows from the registry in order to display them in Flask.
+# However this was unnecessary and I could have used the registry itself rather than organizing
+# all the data into arrays. This was before I knew that you could access objects inside the HTML.
+
+# There was a getter that was going to be used but was no longer necessary:
+
+@self.app.route("/api/getMemberByID", methods=["GET"])
+    def getUserByID():
+        data = request.get_json()
+        foundMember = Members.Members.getMember(id=data.get("memberID"))
+        return jsonify(foundMember.getMemberInfo())
+
+# When called this will return the member info, however I realized this function does not work since its getting JSON
+# which is not possible for a getter. The data must be put inside the URL of the API.

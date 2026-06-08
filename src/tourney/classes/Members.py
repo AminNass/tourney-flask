@@ -1,3 +1,4 @@
+from typing import Self
 
 from tourney.classes.Common import uniqueIDGenerator, saveDataDirectory as saveDir, log as log, removeWhitespace as remWs, isInCharLimit as limCheck, zeroChar as zChar, timeNow as now
 import json
@@ -8,7 +9,12 @@ class Members:
     nameCharLimit = 25
     saveDirectory = saveDir() / "Members"
 
-    def __init__(self, identifier=None, username=None, firstname=None, lastname=None):
+    def __init__(self,
+                 identifier: str | None = None,
+                 username: str | None = None,
+                 firstname: str | None = None,
+                 lastname: str | None = None
+                 ):
         """
         Init class for members. It allows for creating an instance of members class
         It shouldn't be used for creating members as it wouldn't be saved to the registry.
@@ -22,10 +28,6 @@ class Members:
         self.lastname = lastname
 
         self.id = identifier
-
-        # NOTES:
-        # I should not call this class directly and always use its functions.
-        # Otherwise, it will just create an object and not update the registry.
 
     # Save Data
 
@@ -111,7 +113,7 @@ class Members:
 
     # Class method that creates a member.
     @classmethod
-    def createMember(cls, username, firstname, lastname):
+    def createMember(cls, username: str, firstname: str, lastname: str) -> str | Self:
         """
         This function creates a member. This is then saved in the registry.
         This function will always return the new member object with creation is successful.
@@ -124,7 +126,7 @@ class Members:
 
         for ob in cls.registry.values():
         # Checking for every value (Which is an object) in the registry is the same as the username argument.
-            if ob.username.lower() == username.lower():
+            if ob.username.lower() == remWs(username.lower()):
                 log(f"The Username: {username} already exists.", "ERROR")
                 return "Username already exists."
 
@@ -134,22 +136,22 @@ class Members:
             log(f"Cannot create {username}, user, firstname or lastname is more than {lim} characters.", "ERROR")
             return f"All names must be below {lim} characters."
 
-        # Generates a unqiue ID.
-        unqiueId = uniqueIDGenerator(registry=cls.registry, prefix="USER")
+        # Generates a unique ID.
+        uniqueId = uniqueIDGenerator(registry=cls.registry, prefix="USER")
 
         # Then it creates a new object of itself (cls) and puts in the arguments.
         # Added " ".join(text.split()) to remove white space and extra spaces.
-        newMember = cls(identifier=unqiueId, username=remWs(username), firstname=remWs(firstname), lastname=remWs(lastname))
+        newMember = cls(identifier=uniqueId, username=remWs(username), firstname=remWs(firstname), lastname=remWs(lastname))
 
         # Adds the member to the registry.
-        cls.registry[unqiueId] = newMember
+        cls.registry[uniqueId] = newMember
         log(f"Member '{username}' created.", "SUCCESS")
         # Returns the new member to né used in the main class.
         return newMember
 
     # class method to remove a member.
     @classmethod
-    def removeMember(cls, ob):
+    def removeMember(cls, ob: Self) -> bool | str:
         """
         This function removes a member from the registry.
         When successful it will return True, if not successful then it will return an error message as a string.\n
@@ -157,7 +159,11 @@ class Members:
         :param ob:
         :return:
         """
-        def removeMemberFromTeams(memberID):
+        def removeMemberFromTeams(memberID: str):
+            """
+            Handles team removal on member deletion
+            :param memberID:
+            """
             from tourney.classes import Teams as Teams
 
             log("Attempting to remove member from teams.")
@@ -165,10 +171,15 @@ class Members:
             teams = list(Teams.Teams.getTeamRegistry().values())
 
             for team in teams:
-                for teamMemberID in team.members:
-                    if teamMemberID == memberID:
-                        log(f"Found Member in team: {team.name}", "SUCCESS")
-                        team.members.remove(memberID)
+                if hasattr(team, "members"):
+                    for teamMemberID in team.members:
+                        if teamMemberID == memberID:
+                            log(f"Found Member in team: {team.name}", "SUCCESS")
+                            team.members.remove(memberID)
+                else:
+                    if team.member == memberID:
+                        Teams.Teams.removeTeam(team)
+                        log(f"Found Member in team: {team.name}, deleted team since its a individual team.", "SUCCESS")
 
 
 
@@ -179,7 +190,7 @@ class Members:
         if removedUser:
             log(f"Member: {ob.username} removed", "SUCCESS")
 
-            removeMemberFromTeams(ob.id)
+            removeMemberFromTeams(str(ob.id))
 
             return True
         else:
@@ -188,8 +199,24 @@ class Members:
 
     # class method to change member information
     @classmethod
-    def changeInformation(cls, ob, newUsername=None, newFirstName=None, newLastname=None):
-        # Setting arguements to variable
+    def changeInformation(cls,
+                          ob: Self,
+                          newUsername: str | None = None,
+                          newFirstName: str | None = None,
+                          newLastname: str | None = None
+                          ) -> str | Self:
+        """
+        This function is used to change information for a member.
+        This function uses length checks and duplicate username checks for validation.\n
+        * This function will remove extra whitespace.\n
+        * This function will also no make changes for arguments that have an empty string.
+        :param ob:
+        :param newUsername:
+        :param newFirstName:
+        :param newLastname:
+        :return:
+        """
+        # Setting arguments to variable
         username = zChar(newUsername)
         firstname = zChar(newFirstName)
         lastname = zChar(newLastname)
@@ -209,37 +236,45 @@ class Members:
                     log(f"The Username: {newUsername} already exists.", "ERROR")
                     return "Username already exists."
 
-
         if firstname is None: firstname = ob.firstname
         if lastname is None: lastname = ob.lastname
 
-        # Create a new object of itself:
-        # Makes sure that the identifier stays the same by taking it from the original object.
-        # Then updates the username, firstname and lastname.
-        newMember = cls(identifier=ob.id, username=username, firstname=firstname, lastname=lastname)
+        # Other than creating a brand-new member object with the new data you can just update the data on the object itself.
+        # All data will be liked, no hard copies where made. Even setting a variable as an object and modifying will always
+        # update that object. Since its all linked everything will be saved to the registry.
+        editedMember = cls.getMember(id=ob.id)
+        editedMember.username = username
+        editedMember.firstname = firstname
+        editedMember.lastname = lastname
 
-        # Updates the registry, using the id.
-        cls.registry[ob.id] = newMember
-        # Returns the new updated object.
-        return newMember
+        # Just returns the same object when the changes are successful.
+        return editedMember
 
     # Class method that returns object from username
     @classmethod
-    def getMember(cls, id=None, username=None):
+    def getMember(cls, id: str | None = None, username: str | None = None) -> str | Self:
+        """
+        This function will return a member object from the registry using its username or id.
+        If the ID could not be found it will automatically search for the object using the username.
+        Only if you have entered the username as an argument.
+        :param id: 
+        :param username: 
+        :return: 
+        """
         # This gives 2 options for getting the object of the member.
 
-        # Runs when there is something other than None in the ID arguement.
-        if not id == None:
+        # Runs when there is something other than None in the ID argument.
+        if not id is None:
             # Loops through every value in the member registry.
             for ido in cls.registry.values():
-                # Compares the id found in the object with the ID arguement.
+                # Compares the id found in the object with the ID argument.
                 if ido.id == id:
                     # Return the value in the registry (Which is the object).
                     return ido
         # Runs when id is none and username is something other than None.
-        elif not username == None:
+        elif not username is None:
             for ob in cls.registry.values():
-            # Checking for every value (Which is an object) in the regisry is the same as the username arugement.
+            # Checking for every value (Which is an object) in the registry is the same as the username argument.
                 if ob.username.lower() == username.lower():
                     # Returns when found the name.
                     log(f"User found: {username}", "SUCCESS")
@@ -254,36 +289,24 @@ class Members:
         return f"No member with the username: {username} or the ID:, {id} was found."
 
     @classmethod
-    def getMemberRegistry(cls):
+    def getMemberRegistry(cls) -> dict[str, Self]:
+        """
+        This returns the member registry.
+        :return:
+        """
         # Returns the entire registry
         return cls.registry
 
-    # App functions
-
-    @classmethod
-    def formatData(cls):
-        data = [[],[],[],[]]
-
-        IDsList = list(cls.registry.keys())
-
-        # Append to data list
-
-        for ID in IDsList:
-            memberData = cls.getMember(id=ID)
-
-            data[0].append(memberData.id)
-            data[1].append(memberData.username)
-            data[2].append(memberData.firstname)
-            data[3].append(memberData.lastname)
-
-        rowData = list(zip(*data))
-        log(f"Successfully formatted data:\n {rowData}", "SUCCESS")
-        return rowData
     #
     # Object Functions
     #
 
     # Function to get the member info
-    def getMemberInfo(self):
+    def getMemberInfo(self) -> list[str | None]:
+        """
+        This just returns the all the member info in an organized list.\n
+        * [id, username, firstname, lastname]
+        :return:
+        """
         # Returns the username, firstname and lastname.
         return [self.id, self.username, self.firstname, self.lastname]

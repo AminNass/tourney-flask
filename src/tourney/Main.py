@@ -1,5 +1,4 @@
 import datetime
-
 from tourney.classes import Teams as Teams, Members as Members, Events as Events, Tourney as Tourney
 from tourney.app.App import App as AppModule
 from tourney.classes.Common import log as log, getDataDirectory as dataDir
@@ -20,8 +19,7 @@ class Main:
 
     def onInitialize(self):
 
-        # Load logic here, just pre creating for testing.
-
+        # Loading classes:
         Members.Members.loadData()
 
         Teams.Teams.loadData()
@@ -31,9 +29,6 @@ class Main:
         Tourney.Tourney.loadData()
 
         self.appModule.startWindow()
-
-
-
 
 if __name__ == "__main__":
     app = Main()
